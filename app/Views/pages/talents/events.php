@@ -76,7 +76,7 @@ Talents - Home
 </div>
 
 
-<h4 class="mb-3">Event Locations</h4>
+<h4 class="mb-3">Event Venues</h4>
 
 <div class="map-container container">
     <div id="map" style="height: 600px; width: 100%;"></div>
@@ -105,61 +105,58 @@ Talents - Home
 <div class="modal fade" id="addEventModal" tabindex="-1" aria-labelledby="addEventModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
-      <form id="eventForm">
+      <form id="eventForm" action="<?= site_url('talents/saveEvent') ?>" method="post">
         <div class="modal-header">
           <h5 class="modal-title" id="addEventModalLabel">Add New Event</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
 
         <div class="modal-body row g-3">
-
           <!-- Event Details -->
           <div class="col-md-6">
             <label>Event Name</label>
-            <input type="text" class="form-control" name="event_name" required>
-          </div>
-          <div class="col-md-6">
-            <label>Event Description</label>
-            <input type="textbox" class="form-control" name="description" required>
-          </div>
-          <div class="col-md-6">
-            <label>Event Keywords</label>
-            <input type="text" class="form-control" name="event_name" required>
+            <input type="text" class="form-control" name="event_name" required placeholder="Enter the event title">
           </div>
 
           <div class="col-md-6">
+            <label>Event Keywords</label>
+            <input type="text" class="form-control" name="event_keywords" required placeholder="e.g. music, theater, local arts">
+          </div>
+
+          <div class="col-md-12">
+            <label>Event Description</label>
+            <textarea class="form-control" name="description" required placeholder="Describe the event, purpose, and audience..."></textarea>
+          </div>
+
+          <div class="col-md-12">
             <label>Event Date</label>
             <input type="datetime-local" class="form-control" name="event_date" required>
           </div>
+          <!-- Auto-Filled Address Fields -->
+          <div class="col-md-6">
+            <label>Street Address</label>
+            <input type="text" class="form-control" id="street_address" name="street_address" readonly>
+          </div>
+          <div class="col-md-6">
+            <label>Barangay</label>
+            <input type="text" class="form-control" id="barangay" name="barangay" readonly>
+          </div>
+          <div class="col-md-4">
+            <label>City</label>
+            <input type="text" class="form-control" id="city" name="city" readonly>
+          </div>
+          <div class="col-md-4">
+            <label>Province</label>
+            <input type="text" class="form-control" id="province" name="province" readonly>
+          </div>
+          <div class="col-md-4">
+            <label>ZIP Code</label>
+            <input type="text" class="form-control" id="zip_code" name="zip_code" readonly>
+          </div>
 
-          <!-- Address -->
-          <!-- Map Area -->
-      <div class="col-12">
-        <label>Select Location on Map</label>
-        <div id="formMap" style="height: 300px; border: 1px solid #ccc;"></div>
-      </div>
+          <input type="hidden" name="lat" id="lat" readonly>
+          <input type="hidden" name="lang" id="lang" readonly>
 
-      <!-- Auto-Filled Address Fields -->
-      <div class="col-md-6">
-        <label>Street Address</label>
-        <input type="text" class="form-control" name="street_address" readonly>
-      </div>
-      <div class="col-md-6">
-        <label>Barangay</label>
-        <input type="text" class="form-control" name="barangay" readonly>
-      </div>
-      <div class="col-md-4">
-        <label>City</label>
-        <input type="text" class="form-control" name="city" readonly>
-      </div>
-      <div class="col-md-4">
-        <label>Country</label>
-        <input type="text" class="form-control" name="country" readonly>
-      </div>
-      <div class="col-md-4">
-        <label>ZIP Code</label>
-        <input type="text" class="form-control" name="zip_code" readonly>
-      </div>
 
         <div class="modal-footer">
           <button type="submit" class="btn btn-success"><i class="bi bi-floppy"></i> Save Event</button>
@@ -169,58 +166,44 @@ Talents - Home
   </div>
 </div>
 
+
+
 <?= $this->endSection() ?>
 
 
 <?= $this->section('local_javascript') ?>
 <script>
-     document.addEventListener('DOMContentLoaded', function() {
-    // Initialize map
-    const map = L.map('map').setView([11.2759193, 125.0117496], 12);
+    const venues = <?= json_encode($venues) ?>;
 
-    // Add OpenStreetMap tile layer
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
+    document.addEventListener('DOMContentLoaded', function() {
+        const map = L.map('map').setView([11.2445, 125.0036], 12);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
 
-    // Sample marker data
-  const markers = [
-    {
-      lat: 11.2759,
-      lng: 125.0117,
-      title: 'Location A',
-      content: 'This is the detail for Location A.'
-    },
-    {
-      lat: 11.29,
-      lng: 125.02,
-      title: 'Location B',
-      content: 'Information about Location B goes here.'
-    },
-    {
-      lat: 11.26,
-      lng: 125.00,
-      title: 'Location C',
-      content: 'More info about Location C.'
-    }
-  ];
-
-  // Create markers and bind click events
-  markers.forEach(data => {
-    const marker = L.marker([data.lat, data.lng]).addTo(map);
-
-    marker.on('click', () => {
-      // Update modal content
-      document.getElementById('markerModalLabel').textContent = data.title;
-      document.getElementById('markerModalBody').textContent = data.content;
-
-      // Show modal
-      const myModal = new bootstrap.Modal(document.getElementById('markerModal'));
-      myModal.show();
+        venues.forEach(venue => {
+            const marker = L.marker([venue.lat, venue.lng]).addTo(map);
+            marker.bindPopup(
+                `<strong>${venue.name}</strong><br>${venue.city}, ${venue.province}<br>${venue.description}<br>
+                <button class="btn btn-primary btn-sm mt-2" data-bs-toggle="modal" data-bs-target="#addEventModal" data-venue="${encodeURIComponent(JSON.stringify(venue))}"
+        onclick="bookVenue(JSON.parse(decodeURIComponent(this.dataset.venue)))">Book this venue</button>`
+            );
+        });
     });
-  });
 
-});
+      console.log(venues);
+    function bookVenue(venue) {
+      // Update title and visible text
+      document.getElementById('addEventModalLabel').innerText = 'Book Venue - ' + venue.name;
+      // Correctly select input fields by their actual IDs
+    document.querySelector('#street_address').value = venue.street || '';
+    document.querySelector('#barangay').value = venue.barangay || '';
+    document.querySelector('#city').value = venue.city || '';
+    document.querySelector('#province').value = venue.province || '';
+    document.querySelector('#lang').value = venue.lng || '';
+    document.querySelector('#lat').value = venue.lat || '';
+    document.querySelector('[name="zip_code"]').value = venue.zip_code || '';
+    }
 </script>
 
 <?= $this->endSection() ?>

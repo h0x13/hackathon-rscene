@@ -75,7 +75,7 @@ Talents - Home
 </div>
 
 
-<h4 class="mb-3">Concert Locations</h4>
+<h4 class="mb-3">Event Locations</h4>
 
 <div class="map-container container">
     <div id="map" style="height: 600px; width: 100%;"></div>

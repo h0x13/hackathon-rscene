@@ -22,6 +22,9 @@
     <!-- Axios -->
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
+    <!-- SweetAlert -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <!-- Custom CSS -->
     <link rel="stylesheet" href="<?= base_url('css/style.css') ?>">
     <?= $this->renderSection('local_css') ?>
@@ -52,6 +55,26 @@
 
     <!-- Custom JS -->
     <script src="<?= base_url('js/script.js') ?>"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() { 
+            <?php if(session()->getFlashdata('error')): ?>
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: '<?= session()->getFlashdata('error'); ?>'
+                });
+            <?php endif; ?>
+            
+            <?php if(session()->getFlashdata('success')): ?>
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success',
+                    text: '<?= session()->getFlashdata('success'); ?>'
+                });
+            <?php endif; ?>
+        });
+    </script>
      <?= $this->renderSection('local_javascript') ?>
+
 </body>
 </html>
