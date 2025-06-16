@@ -21,7 +21,7 @@ class UserCredentialModel extends Model
     protected $validationRules = [
         'email' => 'required|valid_email|is_unique[user_credential.email,id,{id}]',
         'password' => 'required|min_length[8]',
-        'user_type' => 'required|in_list[user,admin]'
+        'user_type' => 'required|in_list[venue_owner,artist,admin]'
     ];
 
     protected $validationMessages = [

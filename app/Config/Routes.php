@@ -40,3 +40,24 @@ $routes->get('talents/profile', 'TalentController::profile');
 $routes->get('talents/venue', 'TalentController::venues');
 $routes->post('talents/saveEvent', 'TalentController::saveEvent');
 
+// Venue Owner Routes
+$routes->get('dashboard', 'VenueController::dashboard');
+
+// Venue Management Routes
+$routes->group('venue', function($routes) {
+    $routes->get('list', 'VenueController::list');
+    $routes->post('add', 'VenueController::add');
+    $routes->get('view/(:num)', 'VenueController::view/$1');
+    $routes->get('edit/(:num)', 'VenueController::edit/$1');
+    $routes->post('edit/(:num)', 'VenueController::edit/$1');
+    $routes->get('delete/(:num)', 'VenueController::delete/$1');
+});
+
+// Booking Management Routes
+$routes->group('booking', function($routes) {
+    $routes->get('list', 'BookingController::list');
+    $routes->get('view/(:num)', 'BookingController::view/$1');
+    $routes->post('update-status/(:num)', 'BookingController::updateStatus/$1');
+    $routes->post('cancel/(:num)', 'BookingController::cancel/$1');
+});
+

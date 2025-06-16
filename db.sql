@@ -17,7 +17,7 @@ CREATE TABLE user_credential (
     email VARCHAR(254) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
     user_type VARCHAR(50) NOT NULL,
-    FOREIGN KEY (user_profile_id) REFERENCES accounts_userprofile(id) ON DELETE CASCADE
+    FOREIGN KEY (user_profile_id) REFERENCES user_profile(id) ON DELETE CASCADE
 );
 
 -- EventLocation table
@@ -36,7 +36,7 @@ CREATE TABLE event_planner_event (
     event_organizer_id INTEGER NOT NULL,
     event_date DATETIME NOT NULL,
     status VARCHAR(20) NOT NULL,
-    FOREIGN KEY (location_id) REFERENCES event_planner_eventlocation(id) ON DELETE CASCADE,
+    FOREIGN KEY (location_id) REFERENCES event_planner_location(id) ON DELETE CASCADE,
     FOREIGN KEY (event_organizer_id) REFERENCES accounts_userprofile(id) ON DELETE CASCADE
 );
 
@@ -44,6 +44,8 @@ CREATE TABLE event_planner_event (
 CREATE TABLE event_planner_address (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     event_id INTEGER NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
     street_address VARCHAR(255) NOT NULL,
     barangay VARCHAR(255) NOT NULL,
     city VARCHAR(255) NOT NULL,

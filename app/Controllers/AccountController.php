@@ -203,7 +203,7 @@ class AccountController extends ResourceController
                 'user_profile_id' => $user_profile_id,
                 'email' => $verification_data['email'],
                 'password' => password_hash($verification_data['password'], PASSWORD_DEFAULT),
-                'user_type' => 'user'
+                'user_type' => 'artist'
             ]);
 
             $this->session->remove('verification_data');
