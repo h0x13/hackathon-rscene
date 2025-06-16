@@ -38,7 +38,7 @@ Talents - Home
   <div class="container d-flex alig-items-center justify-content-between mt-5">
     <h4 class=""><i class="bi bi-calendar-week"></i> Your Events</h4>
     <button class="btn btn-sm btn-primary mb-0" data-bs-toggle="modal" data-bs-target="#addEventModal">
-      <i class="bi bi-plus-circle"></i> Add Event
+      <i class="bi bi-plus-circle"></i> Book a Venue
     </button>
   </div>
 
@@ -47,13 +47,15 @@ Talents - Home
         <!-- If you have an image field, use it; else use a placeholder -->
         <img src="https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=crop&w=400&q=80" class="card-img-top event-img" alt="Concert">
         <div class="card-body">
-          <h5 class="card-title">{{ event.event_name }}</h5>
+          <h5 class="card-title">First Event</h5>
           <p class="card-text text-muted mb-1">
             <i class="bi bi-geo-alt"></i>
+            San Antonio, Basey Samar
           </p>
           <p class="card-text">
             <small class="text-muted">
               <i class="bi bi-calendar-event"></i>
+              June 20, 2025
             </small>
           </p>
 
@@ -67,27 +69,7 @@ Talents - Home
       </div>
     </div>
 
-     <div class="modal fade" id="eventModal{{ event.id }}" tabindex="-1" aria-labelledby="eventModalLabel{{ event.id }}" aria-hidden="true">
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="eventModalLabel{{ event.id }}">{{ event.event_name }}</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            <p><strong>Organizer:</strong> {{ event.event_organizer }}</p>
-            <p><strong>Description:</strong> {{ event.event_description }}</p>
-            <p><strong>Date:</strong> {{ event.event_date|date:"F d, Y H:i" }}</p>
-            <p><strong>Address:</strong>
-              {{ event.address.barangay }},
-              {{ event.address.city }},
-              {{ event.address.country }} 
-            </p>
-            <p><strong>Coordinates:</strong> {{ event.location.lat }}, {{ event.location.long }}</p>
-          </div>
-        </div>
-      </div>
-    </div>
+     
     <div class="col-12">
       <div class="alert alert-info text-center">You have no events yet.</div>
     </div>
@@ -190,203 +172,54 @@ Talents - Home
 <?= $this->endSection() ?>
 
 
-<?= $this->section('local_js') ?>
+<?= $this->section('local_javascript') ?>
 <script>
-    let mainMap, formMap, selectedMarker;
+     document.addEventListener('DOMContentLoaded', function() {
+    // Initialize map
+    const map = L.map('map').setView([11.2759193, 125.0117496], 12);
 
-    // If you have a time string like "14:30"
-  function to12Hour(time24) {
-      const [hour, minute] = time24.split(':');
-      const date = new Date();
-      date.setHours(hour, minute);
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
-  }
-
-
-  function formatDate(dateStr) {
-    const [year, month, day] = dateStr.split('-');
-    const dateObj = new Date(year, month - 1, day);
-    return dateObj.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-  }
-
-
-  function getCSRFToken() {
-    return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-  }
-
-async function initMainMap() {
-  mainMap = L.map('map').setView([11.2759193, 125.0117496], 12);
-
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors'
-  }).addTo(mainMap);
-
-  // Fetch event locations from API
-  try {
-    const res = await axios.get('/event_planner/events/locations/');
-    const events = res.data.events;
-    events.forEach(event => {
-      const marker = L.marker([event.lat, event.lng]).addTo(mainMap);
-      marker.on('click', () => {
-  // Exclude these fields
-  const exclude = [
-    'event_name', 'event_description', 'event_date',
-    'full_address', 'barangay', 'city', 'lat', 'lng'
-  ];
-  let details = '';
-  for (const [key, value] of Object.entries(event)) {
-    if (!exclude.includes(key) && value) {
-      // Format key to be more readable
-      const label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-      details += `<div><strong>${label}:</strong> ${value}</div>`;
-    }
-  }
-  const [date, time] = event.event_date.split(' ');
-  const time12hr = to12Hour(time);
-  const formattedDate = formatDate(date);
-
-  // Always show the main info at the top
-  document.getElementById('markerModalLabel').textContent = event.event_name;
-  document.getElementById('markerModalBody').innerHTML = `
-    <div><strong>Description:</strong> ${event.event_description}</div>
-      <div><strong>Date:</strong> ${formattedDate}</div>
-  <div><strong>Time:</strong> ${time12hr}</div>
-    <div><strong>Address:</strong> ${event.full_address}</div>
-    <div><strong>Barangay:</strong> ${event.barangay}</div>
-    <div><strong>City:</strong> ${event.city}</div>
-    <hr>
-    ${details}
-  `;
-  const modal = new bootstrap.Modal(document.getElementById('markerModal'));
-  modal.show();
-});
-    });
-  } catch (err) {
-    console.error('Failed to load event locations', err);
-  }
-}
-  
-function initFormMap() {
-    formMap = L.map('formMap').setView([11.2759, 125.0117], 12);
-
+    // Add OpenStreetMap tile layer
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(formMap);
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
 
-    formMap.on('click', async function (e) {
-      const lat = e.latlng.lat;
-      const lon = e.latlng.lng;
+    // Sample marker data
+  const markers = [
+    {
+      lat: 11.2759,
+      lng: 125.0117,
+      title: 'Location A',
+      content: 'This is the detail for Location A.'
+    },
+    {
+      lat: 11.29,
+      lng: 125.02,
+      title: 'Location B',
+      content: 'Information about Location B goes here.'
+    },
+    {
+      lat: 11.26,
+      lng: 125.00,
+      title: 'Location C',
+      content: 'More info about Location C.'
+    }
+  ];
 
-      if (selectedMarker) formMap.removeLayer(selectedMarker);
-      selectedMarker = L.marker([lat, lon]).addTo(formMap);
+  // Create markers and bind click events
+  markers.forEach(data => {
+    const marker = L.marker([data.lat, data.lng]).addTo(map);
 
-      try {
-        const res = await axios.get('https://nominatim.openstreetmap.org/reverse', {
-          params: { format: 'json', lat, lon }
-        });
+    marker.on('click', () => {
+      // Update modal content
+      document.getElementById('markerModalLabel').textContent = data.title;
+      document.getElementById('markerModalBody').textContent = data.content;
 
-        const addr = res.data.address;
-
-        document.querySelector('[name="street_address"]').value = addr.road || '';
-        document.querySelector('[name="barangay"]').value = addr.suburb || addr.village || '';
-        document.querySelector('[name="city"]').value = addr.city || addr.town || addr.municipality || '';
-        document.querySelector('[name="country"]').value = addr.country || '';
-        document.querySelector('[name="zip_code"]').value = addr.postcode || '';
-
-        // Store lat/lon on form
-        const form = document.getElementById('eventForm');
-        form.dataset.lat = lat;
-        form.dataset.lon = lon;
-
-      } catch (err) {
-        alert("Reverse geocoding failed.");
-      }
+      // Show modal
+      const myModal = new bootstrap.Modal(document.getElementById('markerModal'));
+      myModal.show();
     });
-  }
-
-  document.getElementById("eventForm").addEventListener("submit", async function (e) {
-    e.preventDefault();
-
-    const form = e.target;
-    const formData = new FormData(form);
-
-    const lat = form.dataset.lat;
-    const lon = form.dataset.lon;
-
-    if (!lat || !lon) {
-      alert("Please select a location on the map.");
-      return;
-    }
-
-    const postData = {
-      event_name: formData.get("event_name"),
-      event_date: formData.get("event_date"),
-      description: formData.get("description"),
-
-      street_address: formData.get("street_address"),
-      barangay: formData.get("barangay"),
-      city: formData.get("city"),
-      country: formData.get("country"),
-      zip_code: formData.get("zip_code"),
-
-      lat: parseFloat(lat),
-      long: parseFloat(lon),
-    };
-
-    try {
-      await axios.post("/event_planner/events/create", postData, {
-        headers: {
-          "X-CSRFToken": getCSRFToken(),
-        }
-      });
-      alert("Event created successfully!");
-
-      form.reset();
-      form.dataset.lat = "";
-      form.dataset.lon = "";
-
-      const modal = bootstrap.Modal.getInstance(document.getElementById('addEventModal'));
-      modal.hide();
-
-      if (selectedMarker) {
-        formMap.removeLayer(selectedMarker);
-        selectedMarker = null;
-      }
-
-    } catch (error) {
-      console.error(error);
-      alert("Failed to add event.");
-    }
   });
 
-  document.getElementById('addEventModal').addEventListener('shown.bs.modal', function () {
-    setTimeout(() => {
-      if (!formMap) {
-        initFormMap();
-      } else {
-        formMap.invalidateSize();
-      }
-    }, 200);
-  });
-
-
-  initMainMap();
-  document.addEventListener('DOMContentLoaded', function () {
-  var eventDetailModal = document.getElementById('eventDetailModal');
-  eventDetailModal.addEventListener('show.bs.modal', function (event) {
-    var button = event.relatedTarget;
-    var eventData = JSON.parse(button.getAttribute('data-event'));
-
-    document.getElementById('modalEventName').textContent = eventData.name;
-    document.getElementById('modalEventDescription').textContent = eventData.description;
-    document.getElementById('modalEventDate').textContent = eventData.date;
-    document.getElementById('modalEventTime').textContent = eventData.time;
-    document.getElementById('modalEventStreet').textContent = eventData.street;
-    document.getElementById('modalEventBarangay').textContent = eventData.barangay;
-    document.getElementById('modalEventCity').textContent = eventData.city;
-    document.getElementById('modalEventCountry').textContent = eventData.country;
-    document.getElementById('modalEventZip').textContent = eventData.zip;
-  });
 });
 </script>
 
