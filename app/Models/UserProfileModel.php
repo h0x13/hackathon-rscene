@@ -12,6 +12,7 @@ class UserProfileModel extends Model
     protected $returnType = 'array';
     protected $useSoftDeletes = false;
     protected $allowedFields = [
+        'id',
         'first_name',
         'middle_name',
         'last_name',

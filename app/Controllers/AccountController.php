@@ -89,13 +89,15 @@ class AccountController extends ResourceController
             }
 
             $user_profile = $this->userProfileModel->find($user['user_profile_id']);
-
+            
+            
             $this->session->set('user_data', [
-                'user_id' => $user['id'],
-                'email' => $user['email'],
+                'id' => $user['user_profile_id'],
+                'user_id' => $user_profile['id'],
+                'email' => $email,
                 'user_type' => $user['user_type']
             ]);
-
+            // dd($user_profile);
             return $this->respond([
                 'success' => true,
                 'message' => 'Login successful',

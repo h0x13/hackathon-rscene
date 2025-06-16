@@ -11,6 +11,13 @@ class TalentController extends BaseController
 {
     public function home()
     {
+        $session = session();
+        $userId = $session->get('user_data')['user_id'] ?? null;
+        $Id = session()->get('user_data')['id'] ?? null;
+        // $userId = 'test';
+        // $Id = 1;
+
+
         $eventModel = new EventPlannerEvent();
         $events = $eventModel
             ->select('
@@ -29,19 +36,47 @@ class TalentController extends BaseController
             ')
             ->join('event_planner_location', 'event_planner_location.id = event_planner_event.location_id', 'left')
             ->join('event_planner_address', 'event_planner_address.event_id = event_planner_event.id', 'left')
-            ->where('event_planner_event.event_date >=', date('Y-m-d')) // Only future events
-            ->orderBy('event_planner_event.event_date', 'ASC') // Soonest first
+            ->where('event_planner_event.event_date >=', date('Y-m-d'))
+            ->orderBy('event_planner_event.event_date', 'ASC')
             ->limit(3)
             ->findAll();
 
-        return view('pages/talents/home', ['events' => $events]);
+        $eventForMap = $eventModel
+            ->select('
+                event_planner_event.id,
+                event_planner_event.event_name,
+                event_planner_event.event_description,
+                event_planner_event.event_date,
+                event_planner_event.status,
+                event_planner_location.lat,
+                event_planner_location.long as lng,
+                event_planner_address.street_address as street,
+                event_planner_address.barangay,
+                event_planner_address.city,
+                event_planner_address.country,
+                event_planner_address.zip_code
+            ')
+            ->join('event_planner_location', 'event_planner_location.id = event_planner_event.location_id', 'left')
+            ->join('event_planner_address', 'event_planner_address.event_id = event_planner_event.id', 'left')
+            ->where('event_planner_event.event_date >=', date('Y-m-d'))
+            ->findAll();
+
+        $data = [
+            'user_id' => $userId,
+            'id' => $Id,
+            'events' => $events,
+            'eventsForMap' => $eventForMap,
+        ];
+
+        return view('pages/talents/home', $data);
     }
 
     public function events()
     {
-            $userId = session()->get('user_id'); // Adjust this to your session key
+            $session = session();
+            $userId = $session->get('user_data')['user_id'] ?? null;
+            $Id = session()->get('user_data')['id'] ?? null;
 
-            // // Query: Join event, location, and address tables
             $eventModel = new EventPlannerEvent();
             $builder = $eventModel
                 ->select('
@@ -60,7 +95,10 @@ class TalentController extends BaseController
                 ')
                 ->join('event_planner_location', 'event_planner_location.id = event_planner_event.location_id', 'left')
                 ->join('event_planner_address', 'event_planner_address.event_id = event_planner_event.id', 'left')
-                ->where('event_planner_event.event_organizer_id', $userId);
+                ->where('event_planner_event.event_organizer_id', $userId)
+                ->where('event_planner_event.event_date >=', date('Y-m-d'))
+                ->orderBy('event_planner_event.event_date', 'ASC')
+                ->limit(3);
 
             $events = $builder->findAll();
             $venues = [
@@ -247,6 +285,8 @@ class TalentController extends BaseController
 
     public function saveEvent(){
     $session = session();
+    $userId = $session->get('user_data')['user_id'] ?? null;
+    $Id = session()->get('user_data')['id'] ?? null;
     if ($this->request->getMethod() === 'POST') {
         // 1. Save Location
         $locationModel = new EventPlannerLocation();
@@ -268,7 +308,7 @@ class TalentController extends BaseController
             'location_id'         => $location_id,
             'event_name'          => $this->request->getPost('event_name'),
             'event_description'   => $this->request->getPost('description'),
-            'event_organizer_id'  => 1,
+            'event_organizer_id'  => $userId,
             'event_date'          => $this->request->getPost('event_date'),
             'status'              => 'pending',
         ];
@@ -334,6 +374,9 @@ class TalentController extends BaseController
 
     public function talentsEvents()
     {
+        $session = session();
+        $userId = $session->get('user_data')['user_id'] ?? null;
+        $Id = session()->get('user_data')['id'] ?? null;
         $eventModel = new EventPlannerEvent();
         $events = $eventModel
             ->select('
@@ -352,7 +395,7 @@ class TalentController extends BaseController
             ')
             ->join('event_planner_location', 'event_planner_location.id = event_planner_event.location_id', 'left')
             ->join('event_planner_address', 'event_planner_address.event_id = event_planner_event.id', 'left')
-            ->where('event_planner_event.event_organizer_id', 1) // Assuming 1 is the logged-in user ID
+            ->where('event_planner_event.event_organizer_id', $userId)
             ->findAll();
 
         return view('pages/talents/talents_event', ['events' => $events]);
