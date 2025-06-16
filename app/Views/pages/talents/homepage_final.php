@@ -40,7 +40,7 @@
          border-color: #ca0013;
          padding: 10px 30px;
          font-size: 1.1rem;
-         border-radius: 50px;
+         border-radius: 10px;
       }
 
 
