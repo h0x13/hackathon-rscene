@@ -37,43 +37,47 @@ Talents - Home
 <div class="row g-4 mb-5 pe-0 pe-md-5">
   <div class="container d-flex alig-items-center justify-content-between mt-5">
     <h4 class=""><i class="bi bi-calendar-week"></i> Your Events</h4>
-    <button class="btn btn-sm btn-primary mb-0" data-bs-toggle="modal" data-bs-target="#addEventModal">
+    <!-- <button class="btn btn-sm btn-primary mb-0" data-bs-toggle="modal" data-bs-target="#addEventModal">
       <i class="bi bi-plus-circle"></i> Book a Venue
-    </button>
+    </button> -->
   </div>
-
-    <div class="col-md-4">
-      <div class="card event-card">
-        <!-- If you have an image field, use it; else use a placeholder -->
-        <img src="https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=crop&w=400&q=80" class="card-img-top event-img" alt="Concert">
-        <div class="card-body">
-          <h5 class="card-title">First Event</h5>
-          <p class="card-text text-muted mb-1">
-            <i class="bi bi-geo-alt"></i>
-            San Antonio, Basey Samar
-          </p>
-          <p class="card-text">
-            <small class="text-muted">
-              <i class="bi bi-calendar-event"></i>
-              June 20, 2025
-            </small>
-          </p>
-
+        
+<?php if (!empty($events)): ?>
+    <?php foreach ($events as $event): ?>
+      <div class="col-md-4">
+        <div class="card event-card">
+          <img src="https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=crop&w=400&q=80" class="card-img-top event-img" alt="Concert">
+          <div class="card-body">
+            <h5 class="card-title"><?= esc($event['event_name']) ?></h5>
+            <p class="card-text text-muted mb-1">
+              <i class="bi bi-geo-alt"></i>
+              <?= esc($event['city']) ?>, <?= esc($event['province'] ?? '') ?>
+            </p>
+            <p class="card-text">
+              <small class="text-muted">
+                <i class="bi bi-calendar-event"></i>
+                <?= date('F j, Y', strtotime($event['event_date'])) ?>
+              </small>
+            </p>
             <button 
               class="btn btn-outline-primary btn-sm" 
               data-bs-toggle="modal" 
-              data-bs-target="#eventModal{{ event.id }}">
+              data-bs-target="#eventModal<?= esc($event['id']) ?>">
               View Details
             </button>
+          </div>
         </div>
       </div>
-    </div>
-
-     
+    <?php endforeach; ?>
+  <?php else: ?>
     <div class="col-12">
       <div class="alert alert-info text-center">You have no events yet.</div>
     </div>
+  <?php endif; ?>
 </div>
+
+     
+
 
 
 <h4 class="mb-3">Event Venues</h4>

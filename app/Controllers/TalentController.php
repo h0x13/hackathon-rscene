@@ -11,9 +11,27 @@ class TalentController extends BaseController
 {
     public function home()
     {
-        // You can fetch events/books here and pass to the view if needed
-        // $data['events'] = ...;
-        return view('pages/talents/home');
+        $eventModel = new EventPlannerEvent();
+        $events = $eventModel
+            ->select('
+                event_planner_event.id,
+                event_planner_event.event_name,
+                event_planner_event.event_description,
+                event_planner_event.event_date,
+                event_planner_event.status,
+                event_planner_location.lat,
+                event_planner_location.long as lng,
+                event_planner_address.street_address as street,
+                event_planner_address.barangay,
+                event_planner_address.city,
+                event_planner_address.country,
+                event_planner_address.zip_code
+            ')
+            ->join('event_planner_location', 'event_planner_location.id = event_planner_event.location_id', 'left')
+            ->join('event_planner_address', 'event_planner_address.event_id = event_planner_event.id', 'left')
+            ->findAll();
+
+        return view('pages/talents/home', ['events' => $events]);
     }
 
     public function events()
@@ -21,28 +39,27 @@ class TalentController extends BaseController
             // $userId = session()->get('user_id'); // Adjust this to your session key
 
             // // Query: Join event, location, and address tables
-            // $eventModel = new EventPlannerEvent();
-            // $builder = $eventModel
-            //     ->select('
-            //         event_planner_event.id,
-            //         event_planner_event.event_name,
-            //         event_planner_event.event_description,
-            //         event_planner_event.event_date,
-            //         event_planner_event.status,
-            //         event_planner_location.lat,
-            //         event_planner_location.long as lng,
-            //         event_planner_address.street_address as street,
-            //         event_planner_address.barangay,
-            //         event_planner_address.city,
-            //         event_planner_address.country,
-            //         event_planner_address.zip_code,
-            //         event_planner_address.province
-            //     ')
-            //     ->join('event_planner_location', 'event_planner_location.id = event_planner_event.location_id', 'left')
-            //     ->join('event_planner_address', 'event_planner_address.event_id = event_planner_event.id', 'left')
-            //     ->where('event_planner_event.event_organizer_id', $userId);
+            $eventModel = new EventPlannerEvent();
+            $builder = $eventModel
+                ->select('
+                    event_planner_event.id,
+                    event_planner_event.event_name,
+                    event_planner_event.event_description,
+                    event_planner_event.event_date,
+                    event_planner_event.status,
+                    event_planner_location.lat,
+                    event_planner_location.long as lng,
+                    event_planner_address.street_address as street,
+                    event_planner_address.barangay,
+                    event_planner_address.city,
+                    event_planner_address.country,
+                    event_planner_address.zip_code,
+                ')
+                ->join('event_planner_location', 'event_planner_location.id = event_planner_event.location_id', 'left')
+                ->join('event_planner_address', 'event_planner_address.event_id = event_planner_event.id', 'left')
+                ->where('event_planner_event.event_organizer_id', 1);
 
-            // $events = $builder->findAll();
+            $events = $builder->findAll();
             $venues = [
             [
                 'name' => 'Tacloban City Convention Center',
@@ -69,7 +86,7 @@ class TalentController extends BaseController
         ];
 
         $data = [
-            // 'events' => $events,
+            'events' => $events,
             'venues' => $venues
         ];  
         return view('pages/talents/events', $data);
@@ -107,7 +124,7 @@ class TalentController extends BaseController
         // 1. Save Location
         $locationModel = new EventPlannerLocation();
         $locationData = [
-            'long' => $this->request->getPost('lng'),
+            'long' => $this->request->getPost('lang'),
             'lat'  => $this->request->getPost('lat'),
         ];
         $locationInsert = $locationModel->insert($locationData);

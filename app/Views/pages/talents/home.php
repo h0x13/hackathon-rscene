@@ -43,37 +43,39 @@ Talents - Home
 
 <h4 class="mb-3"><i class="bi bi-calendar"></i> Upcoming Events</h4>
   <div class="row g-4 mb-5 pe-0 pe-md-5">
+    <?php if (!empty($events)): ?>
+    <?php foreach ($events as $event): ?>
       <div class="col-md-4">
         <div class="card event-card">
-          <!-- If you have an image field, use it; else use a placeholder -->
           <img src="https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=crop&w=400&q=80" class="card-img-top event-img" alt="Concert">
           <div class="card-body">
-            <h5 class="card-title">First Gig</h5>
-                  <p class="card-text text-muted mb-1">
-                    <i class="bi bi-geo-alt"></i>
-                    San Antonio, Samar
-                  </p>
+            <h5 class="card-title"><?= esc($event['event_name']) ?></h5>
+            <p class="card-text text-muted mb-1">
+              <i class="bi bi-geo-alt"></i>
+              <?= esc($event['city']) ?>, <?= esc($event['country'] ?? '') ?>
+            </p>
             <p class="card-text">
               <small class="text-muted">
                 <i class="bi bi-calendar-event"></i>
-                June 12, 2025
+                <?= date('F j, Y', strtotime($event['event_date'])) ?>
               </small>
             </p>
-
-              <button 
-                class="btn btn-outline-primary btn-sm" 
-                data-bs-toggle="modal" 
-                data-bs-target="#eventModal{{ event.id }}">
-                View Details
-              </button>
+            <button 
+              class="btn btn-outline-primary btn-sm" 
+              data-bs-toggle="modal" 
+              data-bs-target="#eventModal<?= esc($event['id']) ?>">
+              View Details
+            </button>
           </div>
         </div>
       </div>
-      <div class="col-12">
-        <div class="alert alert-info text-center">You have no events yet.</div>
-      </div>
+    <?php endforeach; ?>
+  <?php else: ?>
+    <div class="col-12">
+      <div class="alert alert-info text-center">You have no events yet.</div>
+    </div>
+  <?php endif; ?>
 </div>
-
 
 <h4 class="mb-3">Event Locations</h4>
 
@@ -104,54 +106,22 @@ Talents - Home
 <?= $this->section('local_javascript') ?>
 
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    // Initialize map
-    const map = L.map('map').setView([11.2759193, 125.0117496], 12);
+  const venues = <?= json_encode($events) ?>;
 
-    // Add OpenStreetMap tile layer
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
+    document.addEventListener('DOMContentLoaded', function() {
+        const map = L.map('map').setView([11.2445, 125.0036], 12);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
 
-    // Sample marker data
-  const markers = [
-    {
-      lat: 11.2759,
-      lng: 125.0117,
-      title: 'Location A',
-      content: 'This is the detail for Location A.'
-    },
-    {
-      lat: 11.29,
-      lng: 125.02,
-      title: 'Location B',
-      content: 'Information about Location B goes here.'
-    },
-    {
-      lat: 11.26,
-      lng: 125.00,
-      title: 'Location C',
-      content: 'More info about Location C.'
-    }
-  ];
-
-  // Create markers and bind click events
-  markers.forEach(data => {
-    const marker = L.marker([data.lat, data.lng]).addTo(map);
-
-    marker.on('click', () => {
-      // Update modal content
-      document.getElementById('markerModalLabel').textContent = data.title;
-      document.getElementById('markerModalBody').textContent = data.content;
-
-      // Show modal
-      const myModal = new bootstrap.Modal(document.getElementById('markerModal'));
-      myModal.show();
+        venues.forEach(venue => {
+            const marker = L.marker([venue.lat, venue.lng]).addTo(map);
+            marker.bindPopup(
+                `<strong>${venue.event_name}</strong><br>${venue.city}, ${venue.country}<br>${venue.event_description}<br>
+                `
+            );
+        });
     });
-  });
-
-});
-    
 </script>
 
 <?= $this->endSection() ?>
