@@ -14,8 +14,8 @@ $routes->setTranslateURIDashes(false);
 $routes->set404Override();
 $routes->setAutoRoute(true);
 
+$routes->get('/', 'TalentController::home');
 // Account Management Routes
-$routes->get('/', 'AccountController::index');
 $routes->get('login', 'AccountController::login');
 $routes->post('login', 'AccountController::login');
 $routes->get('logout', 'AccountController::logout');
@@ -31,10 +31,9 @@ $routes->get('change-password', 'AccountController::changePassword');
 $routes->post('change-password', 'AccountController::changePassword');
 $routes->get('profile', 'AccountController::updateProfile');
 $routes->post('profile/update', 'AccountController::updateProfile');
+$routes->get('profile', 'AccountController::index');
 
-$routes->get('/', 'Home::index');
 
 $routes->get('talents', 'TalentController::home');
 $routes->get('talents/events', 'TalentController::events');
-$routes->get('talents/profile', 'TalentController::profile');
 
