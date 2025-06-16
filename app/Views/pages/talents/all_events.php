@@ -37,10 +37,8 @@ Talents - Home
   <div class="row g-4 mb-5 pe-0 pe-md-5">
     
   <div class="container d-flex align-items-center justify-content-between mt-5">
-    <h4 class="mb-3"><i class="bi bi-calendar"></i> Upcoming Events</h4>
-    <a href="<?= site_url('/talents/allEvents') ?>" class="btn btn-sm btn-primary mb-0">
-      View All <i class="bi bi-arrow-right"></i>
-    </a>
+    <h4 class="mb-3"><i class="bi bi-calendar"></i> All Upcoming Events</h4>
+    <a href="<?= site_url('/talents') ?>" role="button" class="btn btn-sm btn-secondary mb-0"><i class="bi bi-arrow-left"></i> Back</a>
   </div>
 
     <?php if (!empty($events)): ?>
@@ -77,51 +75,6 @@ Talents - Home
   <?php endif; ?>
 </div>
 
-<h4 class="mb-3">Event Locations</h4>
 
-<div class="map-container container">
-    <div id="map" style="height: 600px; width: 100%;"></div>
-    </div>
-</div>
-
-<!-- Reusable Modal -->
-<div class="modal fade" id="markerModal" tabindex="-1" aria-labelledby="markerModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h1 class="modal-title fs-5" id="markerModalLabel">Marker Title</h1>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body" id="markerModalBody">
-        Marker content here...
-      </div>
-    </div>
-  </div>
-</div>  
-
-
-<?= $this->endSection() ?>
-
-
-<?= $this->section('local_javascript') ?>
-
-<script>
-  const venues = <?= json_encode($events) ?>;
-
-    document.addEventListener('DOMContentLoaded', function() {
-        const map = L.map('map').setView([11.2445, 125.0036], 12);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors'
-        }).addTo(map);
-
-        venues.forEach(venue => {
-            const marker = L.marker([venue.lat, venue.lng]).addTo(map);
-            marker.bindPopup(
-                `<strong>${venue.event_name}</strong><br>${venue.city}, ${venue.country}<br>${venue.event_description}<br>
-                `
-            );
-        });
-    });
-</script>
 
 <?= $this->endSection() ?>

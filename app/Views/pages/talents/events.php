@@ -30,16 +30,16 @@ Talents - Home
 <?= $this->section('content') ?>
 
 <div class="text-center mb-4">
-    <h1 class="fw-bold mb-2">🎉 Local Events</h1>
+    <h1 class="fw-bold mb-2">🎉 Your Local Events</h1>
     <p class="text-muted">Find and track concerts happening near you. Explore, attend, and enjoy the local music scene!</p>
 </div>
 
 <div class="row g-4 mb-5 pe-0 pe-md-5">
-  <div class="container d-flex alig-items-center justify-content-between mt-5">
+  <div class="container d-flex align-items-center justify-content-between mt-5">
     <h4 class=""><i class="bi bi-calendar-week"></i> Your Events</h4>
-    <!-- <button class="btn btn-sm btn-primary mb-0" data-bs-toggle="modal" data-bs-target="#addEventModal">
-      <i class="bi bi-plus-circle"></i> Book a Venue
-    </button> -->
+    <a role="button" href="<?= site_url('/talents/talentsEvents') ?>" class="btn btn-sm btn-primary mb-0">
+      View All <i class="bi bi-arrow-right"></i>
+    </a>
   </div>
         
 <?php if (!empty($events)): ?>
