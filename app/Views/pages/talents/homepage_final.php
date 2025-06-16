@@ -38,11 +38,10 @@
       .btn-primary {
          background-color: #ca0013;
          border-color: #ca0013;
-         padding: 10px 30px;
+         padding: 10px 50px;
          font-size: 1.1rem;
          border-radius: 10px;
       }
-
 
       .btn-primary:hover {
          background-color: #c72a09;
@@ -133,7 +132,7 @@
    <!-- Navigation -->
    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
       <div class="container">
-         <a class="navbar-brand" href="#hero">VecueConnect</a>
+         <a class="navbar-brand" href="#hero">VenueConnect</a>
          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
             aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
@@ -150,7 +149,7 @@
                   <a class="nav-link" href="#contact">Contact</a>
                </li>
                <li class="nav-item">
-                  <a class="nav-link btn btn-primary ms-3" href="#">Sign Up</a>
+                  <a class="nav-link btn btn-primary btn-sm ms-3" href="<?= site_url('/register') ?>">Sign Up</a>
                </li>
             </ul>
          </div>
@@ -319,7 +318,7 @@
             </div>
             <div class="col-md-4" id="contact">
                <h5>Contact Us</h5>
-               <p>
+               <p class="text-start ms-5 ps-5">
                   Email: <a href="mailto:support@VenueConnect.com">support@VenueConnect.com</a><br>
                   Phone: (123) 456-7890<br>
                   Follow us: <a href="#"><i class="fab fa-facebook"></i></a> <a href="#"><i
