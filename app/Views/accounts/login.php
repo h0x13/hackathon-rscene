@@ -184,7 +184,7 @@
                     showAlert(response.data.message, 'success');
                     // Redirect to profile page after 1 second
                     setTimeout(() => {
-                        window.location.href = "<?= base_url() ?>";
+                        window.location.href = "<?= site_url('/talents') ?>";
                     }, 1000);
                 } else {
                     showAlert(response.data.message || 'An error occurred', 'danger');

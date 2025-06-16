@@ -3,6 +3,7 @@
 <?= $this->section('title') ?>Profile Settings<?= $this->endSection() ?>
 
 <?= $this->section('local_css') ?>
+
 <style>
     .profile-container {
         background: white;

@@ -39,7 +39,7 @@ class TalentController extends BaseController
 
     public function events()
     {
-            // $userId = session()->get('user_id'); // Adjust this to your session key
+            $userId = session()->get('user_id'); // Adjust this to your session key
 
             // // Query: Join event, location, and address tables
             $eventModel = new EventPlannerEvent();
@@ -60,7 +60,7 @@ class TalentController extends BaseController
                 ')
                 ->join('event_planner_location', 'event_planner_location.id = event_planner_event.location_id', 'left')
                 ->join('event_planner_address', 'event_planner_address.event_id = event_planner_event.id', 'left')
-                ->where('event_planner_event.event_organizer_id', 1);
+                ->where('event_planner_event.event_organizer_id', $userId);
 
             $events = $builder->findAll();
             $venues = [
