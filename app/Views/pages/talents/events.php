@@ -211,4 +211,3 @@ Talents - Home
 </script>
 
 <?= $this->endSection() ?>
-
