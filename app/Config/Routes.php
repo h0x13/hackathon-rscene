@@ -14,7 +14,7 @@ $routes->setTranslateURIDashes(false);
 $routes->set404Override();
 $routes->setAutoRoute(true);
 
-$routes->get('/', 'TalentController::home');
+$routes->get('/', 'Home::index');
 // Account Management Routes
 $routes->get('login', 'AccountController::login');
 $routes->post('login', 'AccountController::login');
@@ -31,14 +31,16 @@ $routes->get('change-password', 'AccountController::changePassword');
 $routes->post('change-password', 'AccountController::changePassword');
 $routes->get('profile', 'AccountController::updateProfile');
 $routes->post('profile/update', 'AccountController::updateProfile');
-$routes->get('profile', 'AccountController::index');
+// $routes->get('profile', 'AccountController::index');
 
 
 $routes->get('talents', 'TalentController::home');
 $routes->get('talents/events', 'TalentController::events');
-$routes->get('talents/profile', 'TalentController::profile');
+// $routes->get('talents/profile', 'TalentController::profile');
 $routes->get('talents/venue', 'TalentController::venues');
 $routes->post('talents/saveEvent', 'TalentController::saveEvent');
+$routes->get('talents/allEvents', 'TalentController::allEvents');
+$routes->get('talents/talentsEvents', 'TalentController::talentsEvents');
 
 // Venue Owner Routes
 $routes->get('dashboard', 'VenueController::dashboard');
