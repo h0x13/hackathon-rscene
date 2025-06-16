@@ -43,8 +43,8 @@ class UserCredentialModel extends Model
     public function with($relation)
     {
         if ($relation === 'user_profile') {
-            $this->select('user_credential.*, user_profile.*');
-            $this->join('user_profile', 'user_profile.id = user_credential.user_profile_id');
+            return $this->select('user_credential.*, user_profile.first_name, user_profile.middle_name, user_profile.last_name, user_profile.birthdate, user_profile.image_path')
+                       ->join('user_profile', 'user_profile.id = user_credential.user_profile_id');
         }
         return $this;
     }

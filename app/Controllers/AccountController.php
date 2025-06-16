@@ -7,6 +7,7 @@ use App\Models\UserCredentialModel;
 use CodeIgniter\RESTful\ResourceController;
 use CodeIgniter\API\ResponseTrait;
 use Config\Services;
+use CodeIgniter\Security\Security;
 
 class AccountController extends ResourceController
 {
@@ -42,12 +43,33 @@ class AccountController extends ResourceController
         $user_id = $this->session->get('user_data')['user_id'];
         $user_credential = $this->userCredentialModel->with('user_profile')->find($user_id);
 
-        return view('accounts/profile', ['user_credential' => $user_credential]);
+        if (!$user_credential) {
+            return redirect()->to('login');
+        }
+
+        // Format the data for the view
+        $data = [
+            'user_credential' => [
+                'id' => $user_credential['id'],
+                'email' => $user_credential['email'],
+                'user_type' => $user_credential['user_type'],
+                'user_profile' => [
+                    'first_name' => $user_credential['first_name'],
+                    'middle_name' => $user_credential['middle_name'],
+                    'last_name' => $user_credential['last_name'],
+                    'birthdate' => $user_credential['birthdate'],
+                    'image_path' => $user_credential['image_path']
+                ]
+            ]
+        ];
+
+        return view('accounts/profile', $data);
     }
 
     public function login()
     {
-        if ($this->request->getMethod() === 'post') {
+        if ($this->request->getMethod() === 'POST') {
+            $json = $this->request->getJSON(true);
             $rules = [
                 'email' => 'required|valid_email',
                 'password' => 'required'
@@ -57,8 +79,8 @@ class AccountController extends ResourceController
                 return $this->fail($this->validator->getErrors());
             }
 
-            $email = $this->request->getPost('email');
-            $password = $this->request->getPost('password');
+            $email = $json['email'];
+            $password = $json['password'];
 
             $user = $this->userCredentialModel->where('email', $email)->first();
 
@@ -97,7 +119,10 @@ class AccountController extends ResourceController
 
     public function register()
     {
-        if ($this->request->getMethod() === 'post') {
+        if ($this->request->getMethod() === 'POST') {
+            // Get JSON input
+            $json = $this->request->getJSON(true);
+            
             $rules = [
                 'email' => 'required|valid_email|is_unique[user_credential.email]',
                 'password' => 'required|min_length[8]',
@@ -110,25 +135,38 @@ class AccountController extends ResourceController
                 return $this->fail($this->validator->getErrors());
             }
 
-            $verification_code = random_string('numeric', 6);
+            $email = $json['email'] ?? null;
+            if (empty($email)) {
+                return $this->fail('Email is required');
+            }
+
+            $verification_code = bin2hex(random_bytes(3));
             
             $this->session->set('verification_data', [
-                'email' => $this->request->getPost('email'),
-                'password' => $this->request->getPost('password'),
-                'first_name' => $this->request->getPost('first_name'),
-                'last_name' => $this->request->getPost('last_name'),
-                'birthdate' => $this->request->getPost('birthdate'),
+                'email' => $email,
+                'password' => $json['password'],
+                'first_name' => $json['first_name'],
+                'last_name' => $json['last_name'],
+                'birthdate' => $json['birthdate'],
                 'verification_code' => $verification_code
             ]);
 
             // Send verification email
-            $this->email->setTo($this->request->getPost('email'));
-            $this->email->setSubject('Email Verification');
-            $this->email->setMessage(view('accounts/email', [
-                'is_password_reset' => false,
-                'verification_code' => $verification_code
-            ]));
-            $this->email->send();
+            try {
+                $this->email->setTo($email);
+                $this->email->setSubject('Email Verification');
+                $this->email->setMailType('html');
+                $this->email->setMessage(view('accounts/email', [
+                    'is_password_reset' => false,
+                    'verification_code' => $verification_code
+                ]));
+                
+                if (!$this->email->send()) {
+                    return $this->fail('Failed to send verification email');
+                }
+            } catch (\Exception $e) {
+                return $this->fail('Failed to send verification email');
+            }
 
             return $this->respond([
                 'success' => true,
@@ -141,14 +179,15 @@ class AccountController extends ResourceController
 
     public function verifyCode()
     {
-        if ($this->request->getMethod() === 'post') {
+        if ($this->request->getMethod() === 'POST') {
+            $json = $this->request->getJSON(true);
             $verification_data = $this->session->get('verification_data');
             
             if (!$verification_data) {
                 return $this->fail('No verification data found. Please register again.');
             }
 
-            if ($this->request->getPost('verification_code') !== $verification_data['verification_code']) {
+            if ($json['verification_code'] !== $verification_data['verification_code']) {
                 return $this->fail('Invalid verification code');
             }
 
@@ -180,7 +219,7 @@ class AccountController extends ResourceController
 
     public function forgotPassword()
     {
-        if ($this->request->getMethod() === 'post') {
+        if ($this->request->getMethod() === 'POST') {
             $email = $this->request->getPost('email');
             
             $user = $this->userCredentialModel->where('email', $email)->first();
@@ -189,7 +228,7 @@ class AccountController extends ResourceController
                 return $this->fail('Email not found', 404);
             }
 
-            $verification_code = random_string('numeric', 6);
+            $verification_code = bin2hex(random_bytes(3));
             
             $this->session->set('password_reset_data', [
                 'email' => $email,
@@ -216,18 +255,19 @@ class AccountController extends ResourceController
 
     public function verifyPasswordReset()
     {
-        if ($this->request->getMethod() === 'post') {
+        if ($this->request->getMethod() === 'POST') {
+            $json = $this->request->getJSON(true);
             $reset_data = $this->session->get('password_reset_data');
             
             if (!$reset_data) {
                 return $this->fail('No password reset request found. Please try again.');
             }
 
-            if ($this->request->getPost('verification_code') !== $reset_data['verification_code']) {
+            if ($json['verification_code'] !== $reset_data['verification_code']) {
                 return $this->fail('Invalid verification code');
             }
 
-            $new_password = $this->request->getPost('new_password');
+            $new_password = $json['new_password'];
             list($is_valid, $error_message) = $this->validatePassword($new_password);
             
             if (!$is_valid) {
@@ -256,15 +296,16 @@ class AccountController extends ResourceController
             return redirect()->to('login');
         }
 
-        if ($this->request->getMethod() === 'post') {
+        if ($this->request->getMethod() === 'POST') {
+            $json = $this->request->getJSON(true);
             $user_id = $this->session->get('user_data')['user_id'];
             $user = $this->userCredentialModel->find($user_id);
 
-            if (!password_verify($this->request->getPost('current_password'), $user['password'])) {
+            if (!password_verify($json['current_password'], $user['password'])) {
                 return $this->fail('Current password is incorrect');
             }
 
-            $new_password = $this->request->getPost('new_password');
+            $new_password = $json['new_password'];
             list($is_valid, $error_message) = $this->validatePassword($new_password);
             
             if (!$is_valid) {
@@ -290,15 +331,16 @@ class AccountController extends ResourceController
             return redirect()->to('login');
         }
 
-        if ($this->request->getMethod() === 'post') {
+        if ($this->request->getMethod() === 'POST') {
+            $json = $this->request->getJSON(true);
             $user_id = $this->session->get('user_data')['user_id'];
             $user = $this->userCredentialModel->find($user_id);
             
             $this->userProfileModel->update($user['user_profile_id'], [
-                'first_name' => $this->request->getPost('first_name'),
-                'middle_name' => $this->request->getPost('middle_name'),
-                'last_name' => $this->request->getPost('last_name'),
-                'birthdate' => $this->request->getPost('birthdate')
+                'first_name' => $json['first_name'],
+                'middle_name' => $json['middle_name'] ?? null,
+                'last_name' => $json['last_name'],
+                'birthdate' => $json['birthdate']
             ]);
 
             return $this->respond([
@@ -309,7 +351,27 @@ class AccountController extends ResourceController
 
         $user_id = $this->session->get('user_data')['user_id'];
         $user_credential = $this->userCredentialModel->with('user_profile')->find($user_id);
+
+        if (!$user_credential) {
+            return redirect()->to('login');
+        }
+
+        // Format the data for the view
+        $data = [
+            'user_credential' => [
+                'id' => $user_credential['id'],
+                'email' => $user_credential['email'],
+                'user_type' => $user_credential['user_type'],
+                'user_profile' => [
+                    'first_name' => $user_credential['first_name'],
+                    'middle_name' => $user_credential['middle_name'],
+                    'last_name' => $user_credential['last_name'],
+                    'birthdate' => $user_credential['birthdate'],
+                    'image_path' => $user_credential['image_path']
+                ]
+            ]
+        ];
         
-        return view('accounts/profile', ['user_credential' => $user_credential]);
+        return view('accounts/profile', $data);
     }
 }
