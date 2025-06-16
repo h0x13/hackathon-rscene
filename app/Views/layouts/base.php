@@ -37,7 +37,7 @@
 
       <a href="<?= site_url('/talents') ?>"><i class="bi bi-house-door"></i> Home</a>
       <a href="<?= site_url('/talents/events') ?>"><i class="bi bi-calendar-event"></i> Events</a>
-      <a href="{% url 'profile' %}"><i class="bi bi-gear"></i> Profile</a>
+      <a href="<?= site_url('talents/profile') ?>"><i class="bi bi-gear"></i> Profile</a>
       <a href="{% url 'logout' %}"><i class="bi bi-box-arrow-right"></i> Logout</a>
    </div>
 

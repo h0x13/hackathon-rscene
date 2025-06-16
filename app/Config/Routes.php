@@ -9,4 +9,5 @@ $routes->get('/', 'Home::index');
 
 $routes->get('talents', 'TalentController::home');
 $routes->get('talents/events', 'TalentController::events');
+$routes->get('talents/profile', 'TalentController::profile');
 

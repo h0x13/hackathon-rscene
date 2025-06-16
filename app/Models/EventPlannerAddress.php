@@ -6,7 +6,7 @@ use CodeIgniter\Model;
 
 class EventPlannerAddress extends Model
 {
-    protected $table            = 'eventplanneraddresses';
+    protected $table            = 'event_planner_address';
     protected $primaryKey       = 'id';
     protected $useAutoIncrement = true;
     protected $returnType       = 'array';

@@ -19,4 +19,8 @@ class TalentController extends BaseController
         // $data['events'] = ...;
         return view('pages/talents/events');
     }
+
+    public function profile(){
+        return view('pages/talents/profile');
+    }
 }
