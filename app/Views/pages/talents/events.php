@@ -23,7 +23,35 @@ Talents - Home
             max-width: 500px;
             margin: 0 auto 32px auto;
         }
-      </style>
+        .booking-time-slots {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .time-slot {
+            padding: 8px;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .time-slot:hover {
+            background-color: #f8f9fa;
+        }
+        .time-slot.selected {
+            background-color: #0d6efd;
+            color: white;
+            border-color: #0d6efd;
+        }
+        .time-slot.unavailable {
+            background-color: #f8f9fa;
+            color: #6c757d;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+    </style>
 
 <?= $this->endSection() ?>
       
@@ -65,6 +93,32 @@ Talents - Home
               data-bs-target="#eventModal<?= esc($event['id']) ?>">
               View Details
             </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Event Details Modal -->
+      <div class="modal fade" id="eventModal<?= esc($event['id']) ?>" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title"><?= esc($event['event_name']) ?></h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <div class="row">
+                <div class="col-md-6">
+                  <img src="https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=crop&w=400&q=80" class="img-fluid rounded" alt="Event Image">
+                </div>
+                <div class="col-md-6">
+                  <h6>Event Details</h6>
+                  <p><strong>Date:</strong> <?= date('F j, Y', strtotime($event['event_date'])) ?></p>
+                  <p><strong>Location:</strong> <?= esc($event['city']) ?>, <?= esc($event['province'] ?? '') ?></p>
+                  <p><strong>Description:</strong> <?= esc($event['event_description']) ?></p>
+                  
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -129,7 +183,8 @@ Talents - Home
 
           <div class="col-md-12">
             <label>Event Description</label>
-            <textarea class="form-control" name="description" required placeholder="Describe the event, purpose, and audience..."></textarea>
+            <textarea class="form-control" name="description" required placeholder="Describe the event, purpose, and audience..." minlength="10"></textarea>
+            <div class="invalid-feedback">Event description must be at least 10 characters long.</div>
           </div>
 
           <div class="col-md-12">
@@ -170,7 +225,56 @@ Talents - Home
   </div>
 </div>
 
+<!-- Booking Modal -->
+<div class="modal fade" id="bookingModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Book Event</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="bookingForm">
+                    <input type="hidden" id="eventId" name="event_id">
+                    <input type="hidden" id="startTime" name="start_time">
+                    <input type="hidden" id="endTime" name="end_time">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Select Date</label>
+                        <input type="date" class="form-control" id="bookingDate" required min="<?= date('Y-m-d') ?>">
+                    </div>
 
+                    <div class="mb-3">
+                        <label class="form-label">Select Time Slot</label>
+                        <div class="booking-time-slots" id="timeSlots">
+                            <!-- Time slots will be populated here -->
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Notes (Optional)</label>
+                        <textarea class="form-control" id="bookingNotes" name="notes" rows="3"></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Payment Method</label>
+                        <select class="form-select" id="paymentMethod" name="payment_method" required>
+                            <option value="">Select payment method</option>
+                            <option value="cash">Cash</option>
+                            <option value="bank_transfer">Bank Transfer</option>
+                            <option value="credit_card">Credit Card</option>
+                            <option value="gcash">GCash</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="submitBooking()">Book Now</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <?= $this->endSection() ?>
 
@@ -208,6 +312,116 @@ Talents - Home
     document.querySelector('#lat').value = venue.lat || '';
     document.querySelector('[name="zip_code"]').value = venue.zip_code || '';
     }
+
+    function showBookingModal(eventId) {
+        document.getElementById('eventId').value = eventId;
+        document.getElementById('bookingDate').value = '';
+        document.getElementById('startTime').value = '';
+        document.getElementById('endTime').value = '';
+        document.getElementById('bookingNotes').value = '';
+        document.getElementById('paymentMethod').value = '';
+        document.getElementById('timeSlots').innerHTML = '';
+        
+        new bootstrap.Modal(document.getElementById('bookingModal')).show();
+    }
+
+    function generateTimeSlots() {
+        const date = document.getElementById('bookingDate').value;
+        if (!date) return;
+
+        const timeSlots = document.getElementById('timeSlots');
+        timeSlots.innerHTML = '';
+
+        // Generate time slots from 9 AM to 9 PM
+        for (let hour = 9; hour <= 21; hour++) {
+            const startTime = `${hour.toString().padStart(2, '0')}:00`;
+            const endTime = `${(hour + 1).toString().padStart(2, '0')}:00`;
+            
+            const slot = document.createElement('div');
+            slot.className = 'time-slot';
+            slot.textContent = `${startTime} - ${endTime}`;
+            slot.onclick = () => selectTimeSlot(slot, startTime, endTime);
+            
+            timeSlots.appendChild(slot);
+        }
+
+        // Check availability for each slot
+        checkAvailability(date);
+    }
+
+    function selectTimeSlot(slot, startTime, endTime) {
+        // Remove selection from all slots
+        document.querySelectorAll('.time-slot').forEach(s => {
+            s.classList.remove('selected');
+        });
+        
+        // Add selection to clicked slot
+        slot.classList.add('selected');
+        
+        // Update hidden inputs
+        document.getElementById('startTime').value = `${document.getElementById('bookingDate').value} ${startTime}`;
+        document.getElementById('endTime').value = `${document.getElementById('bookingDate').value} ${endTime}`;
+    }
+
+    function checkAvailability(date) {
+        const eventId = document.getElementById('eventId').value;
+        
+        fetch(`<?= base_url('booking/check-availability') ?>/${eventId}?date=${date}`)
+            .then(response => response.json())
+            .then(data => {
+                const slots = document.querySelectorAll('.time-slot');
+                slots.forEach(slot => {
+                    const [startTime] = slot.textContent.split(' - ');
+                    if (data.unavailable_slots.includes(startTime)) {
+                        slot.classList.add('unavailable');
+                        slot.onclick = null;
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Error checking availability:', error);
+            });
+    }
+
+    function submitBooking() {
+        const formData = {
+            event_id: document.getElementById('eventId').value,
+            start_time: document.getElementById('startTime').value,
+            end_time: document.getElementById('endTime').value,
+            notes: document.getElementById('bookingNotes').value,
+            payment_method: document.getElementById('paymentMethod').value
+        };
+
+        if (!formData.start_time || !formData.end_time) {
+            alert('Please select a time slot');
+            return;
+        }
+
+        fetch('<?= base_url('booking/create') ?>', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                throw new Error(data.error);
+            }
+            alert('Booking created successfully!');
+            bootstrap.Modal.getInstance(document.getElementById('bookingModal')).hide();
+            // Optionally refresh the page or update the UI
+            window.location.reload();
+        })
+        .catch(error => {
+            console.error('Error creating booking:', error);
+            alert(error.message || 'Failed to create booking');
+        });
+    }
+
+    // Add event listener for date change
+    document.getElementById('bookingDate').addEventListener('change', generateTimeSlots);
 </script>
 
 <?= $this->endSection() ?>

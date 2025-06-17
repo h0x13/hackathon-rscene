@@ -6,8 +6,7 @@ use App\Models\UserProfileModel;
 use App\Models\UserCredentialModel;
 use CodeIgniter\RESTful\ResourceController;
 use CodeIgniter\API\ResponseTrait;
-use Config\Services;
-use CodeIgniter\Security\Security;
+
 
 class AccountController extends ResourceController
 {

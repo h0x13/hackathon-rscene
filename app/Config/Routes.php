@@ -59,8 +59,11 @@ $routes->group('venue', function($routes) {
 // Booking Management Routes
 $routes->group('booking', function($routes) {
     $routes->get('list', 'BookingController::list');
+    $routes->post('create', 'BookingController::create');
     $routes->get('view/(:num)', 'BookingController::view/$1');
     $routes->post('update-status/(:num)', 'BookingController::updateStatus/$1');
+    $routes->post('update-payment/(:num)', 'BookingController::updatePayment/$1');
     $routes->post('cancel/(:num)', 'BookingController::cancel/$1');
+    $routes->get('check-availability/(:num)', 'BookingController::checkAvailability/$1');
 });
 
