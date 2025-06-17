@@ -34,7 +34,7 @@
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
       <div class="sidebar-header text-info">
-         <i class="bi bi-palette"></i> ArtScene
+         <i class="bi bi-palette"></i> VenueConnect
          <span class="close-btn" onclick="toggleSidebar()"><i class="bi bi-x"></i></span>
       </div>
         <?php if (session()->get('user_data')['user_type'] === 'artist'): ?>
