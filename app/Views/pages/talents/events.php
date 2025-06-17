@@ -514,7 +514,7 @@ VenueConnect - Home
     const venues = <?= json_encode($venues) ?>;
 
     document.addEventListener('DOMContentLoaded', function() {
-        const map = L.map('map').setView([11.2445, 125.0036], 12);
+        const map = L.map('map').setView([11.7693, 124.8824], 10);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors'
         }).addTo(map);

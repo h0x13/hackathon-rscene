@@ -1,11 +1,9 @@
 <?= $this->extend('layouts/base') ?>
 
-<?= $this->section('title') ?>
-Talents - Profile Setting
-<?= $this->endSection() ?>
-
+<?= $this->section('title') ?>Profile Settings<?= $this->endSection() ?>
 
 <?= $this->section('local_css') ?>
+
 <style>
     .profile-container {
         background: white;
@@ -183,6 +181,8 @@ Talents - Profile Setting
 <?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
+<!-- Include Preloader Component -->
+<?= view('components/preloader') ?>
 
 <div class="profile-container">
     <div class="profile-header">
@@ -194,54 +194,76 @@ Talents - Profile Setting
 
     <div class="profile-info">
         <div class="profile-avatar">
-           JD
+            <?= substr($user_credential['user_profile']['first_name'], 0, 1) . substr($user_credential['user_profile']['last_name'], 0, 1) ?>
         </div>
         <div class="profile-details">
-            <h2 class="profile-name">John Doe</h2>
-            <p class="profile-email">john.doe@gmail.com</p>
+            <h2 class="profile-name"><?= $user_credential['user_profile']['first_name'] ?> <?= $user_credential['user_profile']['last_name'] ?></h2>
+            <p class="profile-email"><?= $user_credential['email'] ?></p>
         </div>
     </div>
 
     <form id="profileForm" onsubmit="handleSubmit(event)">
+        <?= csrf_field() ?>
         <div class="form-section">
             <h2>Personal Information</h2>
             <div class="row">
                 <div class="col-md-4 mb-3">
                     <label for="first_name" class="form-label">First Name</label>
-                    <input type="text" class="form-control" id="first_name" name="first_name" value="{{ user_credential.user_profile.first_name }}" required>
+                    <input type="text" class="form-control" id="first_name" name="first_name" value="<?= $user_credential['user_profile']['first_name'] ?>" required>
                 </div>
                 <div class="col-md-4 mb-3">
                     <label for="middle_name" class="form-label">Middle Name</label>
-                    <input type="text" class="form-control" id="middle_name" name="middle_name" value="{{ user_credential.user_profile.middle_name|default:'' }}">
+                    <input type="text" class="form-control" id="middle_name" name="middle_name" value="<?= $user_credential['user_profile']['middle_name'] ?? '' ?>">
                 </div>
                 <div class="col-md-4 mb-3">
                     <label for="last_name" class="form-label">Last Name</label>
-                    <input type="text" class="form-control" id="last_name" name="last_name" value="{{ user_credential.user_profile.last_name }}" required>
+                    <input type="text" class="form-control" id="last_name" name="last_name" value="<?= $user_credential['user_profile']['last_name'] ?>" required>
                 </div>
             </div>
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label for="email" class="form-label">Email Address</label>
-                    <input type="email" class="form-control" id="email" value="{{ user_credential.email }}" disabled>
+                    <input type="email" class="form-control" id="email" value="<?= $user_credential['email'] ?>" disabled>
                 </div>
                 <div class="col-md-6 mb-3">
                     <label for="birthdate" class="form-label">Birthdate</label>
-                    <input type="date" class="form-control" id="birthdate" name="birthdate" value="{{ user_credential.user_profile.birthdate|date:'Y-m-d' }}" required>
+                    <input type="date" class="form-control" id="birthdate" name="birthdate" value="<?= date('Y-m-d', strtotime($user_credential['user_profile']['birthdate'])) ?>" required>
+                </div>
+            </div>
+
+            <h2>Artist Information</h2>
+            
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="artist_name" class="form-label">Stage Name</label>
+                    <input type="text" class="form-control" id="artist_name" name="artist_name" value="<?= $user_credential['artist']['artist_name'] ?? '' ?>" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="talent_fee" class="form-label">Talent Fee (&#8369;)</label>
+                    <input type="text" class="form-control" id="talent_fee" name="talent_fee" value="<?= $user_credential['artist']['talent_fee'] ?? '' ?? '' ?>">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="base_rate" class="form-label">Base Rate (minimum hours)</label>
+                    <input type="text" class="form-control" id="base_rate" name="base_rate" value="<?= $user_credential['artist']['base_rate'] ?? '' ?>" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="mod" class="form-label">Mode of Payments</label>
+                    <input type="text" class="form-control" id="mod" name="mod" value="<?= $user_credential['user_profile']['mode_of_payments'] ?? '' ?>">
                 </div>
             </div>
         </div>
 
         <div class="action-buttons">
-            <a href="{% url 'change_password' %}" class="btn btn-outline-primary">Change Password</a>
+            <a href="<?= base_url('change-password') ?>" class="btn btn-outline-primary">Change Password</a>
             <button type="submit" class="btn btn-primary">Save Changes</button>
         </div>
     </form>
 </div>
-
 <?= $this->endSection() ?>
 
-
-<?= $this->section('local_javascript') ?>
+<?= $this->section('local_js') ?>
 <script>
     function showAlert(message, type) {
         const alertContainer = document.getElementById('alertContainer');
@@ -263,28 +285,29 @@ Talents - Profile Setting
         event.preventDefault();
 
         const form = event.target;
-        const formData = new FormData(form);
-
-        const data = {
-            first_name: formData.get('first_name'),
-            middle_name: formData.get('middle_name'),
-            last_name: formData.get('last_name'),
-            birthdate: formData.get('birthdate')
+        // const formData = new FormData(form);
+        
+        const data = { 
+            first_name: form.get('first_name'),
+            middle_name: form.get('middle_name'),
+            last_name: form.get('last_name'),
+            birthdate: form.get('birthdate'),
+            artist_name: form.get('artist_name'),
+            talent_fee: form.get('talent_fee'),
+            base_rate: form.get('base_rate'),
+            mode_of_payments: form.get('mod'),
         };
 
         try {
-            const response = await axios.post('{% url "update_profile" %}', data, {
+            const response = await axios.post('<?= site_url('talents/profile/update') ?>', data, {
                 headers: {
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'X-CSRF-TOKEN': document.querySelector('[name=<?= csrf_token() ?>]').value,
                     'Content-Type': 'application/json'
                 }
             });
 
             if (response.data.success) {
                 showAlert(response.data.message, 'success');
-                // Update profile display
-                document.querySelector('.profile-name').textContent = `${data.first_name} ${data.last_name}`;
-                document.querySelector('.profile-avatar').textContent = `${data.first_name[0]}${data.last_name[0]}`;
             } else {
                 showAlert(response.data.message || 'An error occurred', 'danger');
             }

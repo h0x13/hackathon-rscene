@@ -204,7 +204,11 @@
             </div>
             <button type="submit" class="btn btn-primary">Change Password</button>
             <div class="mt-4 text-center">
-                <a href="<?= base_url('profile') ?>">Back to Profile</a>
+                <?php if (session()->get('user_data')['user_type'] == 'artist'): ?>
+                        <a href="<?= base_url('talents/profile') ?>">Back to Profile</a>
+                <?php else: ?>
+                        <a href="<?= base_url('profile') ?>">Back to Profile</a>
+                <?php endif; ?>
             </div>
         </form>
     </div>

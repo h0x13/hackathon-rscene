@@ -9,23 +9,12 @@ VenueConnect - Discover Events
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         body {
-            background: linear-gradient(135deg, #6e8efb, #a777e3);
             font-family: 'Poppins', sans-serif;
-            color: #2c3e50;
             min-height: 100vh;
             position: relative;
             overflow-x: hidden;
         }
-        body::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1), transparent 70%);
-            z-index: -1;
-        }
+
         .container {
             position: relative;
             z-index: 1;
@@ -78,28 +67,7 @@ VenueConnect - Discover Events
             transform: translateY(-2px);
             background: white;
         }
-        .event-card {
-            border-radius: 15px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-            transition: all 0.4s ease;
-            background: white;
-            overflow: hidden;
-            animation: fadeInUp 0.8s ease-in-out;
-        }
-        .event-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15), 0 0 0 3px rgba(110, 142, 251, 0.1);
-        }
-        .event-img {
-            border-radius: 15px 15px 0 0;
-            object-fit: cover;
-            height: 200px;
-            width: 100%;
-            transition: transform 0.3s ease;
-        }
-        .event-card:hover .event-img {
-            transform: scale(1.05);
-        }
+
         .card-body {
             padding: 1.5rem;
         }
@@ -249,25 +217,25 @@ VenueConnect - Discover Events
 <div class="container py-5">
     <div class="header-section">
         <h1>🎵 Discover Local Events 📖</h1>
-        <p class="text-white">Explore and attend exciting concerts and events happening near you!</p>
+        <p >Explore and attend exciting concerts and events happening near you!</p>
     </div>
 
     <div class="search-bar">
         <input type="text" class="form-control" placeholder="Search events by name or location..." aria-label="Search events">
     </div>
 
-    <div class="d-flex align-items-center justify-content-between mb-4">
+    <div class="d-flex align-items-center justify-content-between mb-4 pe-5">
         <h4 class="section-title"><i class="bi bi-calendar me-2"></i>Upcoming Events</h4>
         <a href="<?= site_url('/talents/allEvents') ?>" class="btn btn-primary">
             View All <i class="bi bi-arrow-right ms-1"></i>
         </a>
     </div>
 
-    <div class="row g-4 mb-5">
+    <div class="row g-4 mb-5">  
         <?php if (!empty($events)): ?>
             <?php foreach ($events as $event): ?>
                 <div class="col-md-4">
-                    <div class="card event-card">
+                    <div class="card">
                         <img src="https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=crop&w=400&q=80" class="card-img-top event-img" alt="Event">
                         <div class="card-body">
                             <h5 class="card-title"><?= esc($event['event_name']) ?></h5>
@@ -278,7 +246,7 @@ VenueConnect - Discover Events
                             <p class="card-text">
                                 <small class="text-muted">
                                     <i class="bi bi-calendar-event me-1"></i>
-                                    <?= date('F j, Y', strtotime($event['event_date'])) ?>
+                                    <?= date('F j, Y', strtotime($event['event_startdate'])) ?>
                                 </small>
                             </p>
                             <button
@@ -287,8 +255,33 @@ VenueConnect - Discover Events
                                 data-bs-target="#eventModal<?= esc($event['id']) ?>">
                                 View Details
                             </button>
-                        </div>
-                    </div>
+                        </div> <!-- end card-body -->
+                    </div> <!-- end card -->
+
+                    <!-- Modal -->
+                    <div class="modal" id="eventModal<?= esc($event['id']) ?>" tabindex="-1">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title"><?= esc($event['event_name']) ?></h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <img src="https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=crop&w=400&q=80" class="img-fluid rounded" alt="Event Image">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h6>Event Details</h6>
+                                            <p><strong>Date:</strong> <?= date('F j, Y', strtotime($event['event_startdate'])) ?></p>
+                                            <p><strong>Location:</strong> <?= esc($event['city']) ?>, <?= esc($event['province'] ?? '') ?></p>
+                                            <p><strong>Description:</strong> <?= esc($event['event_description']) ?></p>
+                                        </div>
+                                    </div>
+                                </div> 
+                            </div> 
+                        </div> 
+                    </div> 
                 </div>
             <?php endforeach; ?>
         <?php else: ?>
@@ -296,7 +289,8 @@ VenueConnect - Discover Events
                 <div class="alert alert-info text-center">No events available at the moment.</div>
             </div>
         <?php endif; ?>
-    </div>
+    </div> 
+
 
     <h4 class="section-title mb-4">Event Locations</h4>
     <div class="map-container">
@@ -326,7 +320,7 @@ VenueConnect - Discover Events
     const venues = <?= json_encode($events) ?>;
 
     document.addEventListener('DOMContentLoaded', function() {
-        const map = L.map('map').setView([11.2445, 125.0036], 12);
+        const map = L.map('map').setView([11.7693, 124.8824], 10);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors'
         }).addTo(map);
