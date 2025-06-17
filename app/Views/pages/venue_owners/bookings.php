@@ -26,10 +26,12 @@
                     <thead>
                         <tr>
                             <th>Event Name</th>
-                            <th>Organizer</th>
-                            <th>Date</th>
+                            <th>Booker</th>
+                            <th>Date & Time</th>
                             <th>Venue</th>
+                            <th>Amount</th>
                             <th>Status</th>
+                            <th>Payment</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -57,24 +59,90 @@
                         <p><strong>Name:</strong> <span id="eventName"></span></p>
                         <p><strong>Description:</strong> <span id="eventDescription"></span></p>
                         <p><strong>Date:</strong> <span id="eventDate"></span></p>
+                        <p><strong>Time:</strong> <span id="eventTime"></span></p>
                         <p><strong>Status:</strong> <span id="eventStatus"></span></p>
                     </div>
                     <div class="col-md-6">
-                        <h6>Organizer Information</h6>
-                        <p><strong>Name:</strong> <span id="organizerName"></span></p>
-                        <p><strong>Email:</strong> <span id="organizerEmail"></span></p>
+                        <h6>Booker Information</h6>
+                        <p><strong>Name:</strong> <span id="bookerName"></span></p>
+                        <p><strong>Email:</strong> <span id="bookerEmail"></span></p>
                     </div>
                 </div>
                 <div class="row mt-3">
-                    <div class="col-12">
+                    <div class="col-md-6">
                         <h6>Venue Information</h6>
                         <p><strong>Name:</strong> <span id="venueName"></span></p>
                         <p><strong>Address:</strong> <span id="venueAddress"></span></p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Payment Information</h6>
+                        <p><strong>Total Amount:</strong> <span id="totalAmount"></span></p>
+                        <p><strong>Payment Status:</strong> <span id="paymentStatus"></span></p>
+                        <div id="paymentHistory">
+                            <h6>Payment History</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Amount</th>
+                                            <th>Method</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="paymentHistoryBody">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
             <div class="modal-footer" id="bookingActions">
                 <!-- Action buttons will be dynamically added here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Payment Modal -->
+<div class="modal fade" id="paymentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Update Payment Status</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="paymentForm">
+                    <input type="hidden" id="paymentBookingId">
+                    <div class="mb-3">
+                        <label class="form-label">Payment Status</label>
+                        <select class="form-select" id="paymentStatus" required>
+                            <option value="pending">Pending</option>
+                            <option value="completed">Completed</option>
+                            <option value="failed">Failed</option>
+                            <option value="refunded">Refunded</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Payment Method</label>
+                        <select class="form-select" id="paymentMethod" required>
+                            <option value="cash">Cash</option>
+                            <option value="bank_transfer">Bank Transfer</option>
+                            <option value="credit_card">Credit Card</option>
+                            <option value="gcash">GCash</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Transaction ID</label>
+                        <input type="text" class="form-control" id="transactionId">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="updatePayment()">Update Payment</button>
             </div>
         </div>
     </div>
@@ -94,6 +162,16 @@ function getStatusColor(status) {
     }
 }
 
+function getPaymentStatusColor(status) {
+    switch(status.toLowerCase()) {
+        case 'pending': return 'warning';
+        case 'completed': return 'success';
+        case 'failed': return 'danger';
+        case 'refunded': return 'info';
+        default: return 'secondary';
+    }
+}
+
 function updateFilterButtons(activeFilter) {
     const buttons = document.querySelectorAll('#filterButtons .btn');
     buttons.forEach(btn => {
@@ -105,11 +183,33 @@ function updateFilterButtons(activeFilter) {
     });
 }
 
+function formatDateTime(dateTimeStr) {
+    const date = new Date(dateTimeStr);
+    return date.toLocaleString();
+}
+
+function formatDate(dateTimeStr) {
+    const date = new Date(dateTimeStr);
+    return date.toLocaleDateString();
+}
+
+function formatTime(dateTimeStr) {
+    const date = new Date(dateTimeStr);
+    return date.toLocaleTimeString();
+}
+
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('en-PH', {
+        style: 'currency',
+        currency: 'PHP'
+    }).format(amount);
+}
+
 function loadBookings() {
     const tbody = document.getElementById('bookingsTableBody');
     tbody.innerHTML = `
         <tr>
-            <td colspan="6" class="text-center">
+            <td colspan="8" class="text-center">
                 <div class="spinner-border text-primary" role="status">
                     <span class="visually-hidden">Loading...</span>
                 </div>
@@ -135,7 +235,7 @@ function loadBookings() {
             if (bookings.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="6" class="text-center">No bookings found</td>
+                        <td colspan="8" class="text-center">No bookings found</td>
                     </tr>
                 `;
                 return;
@@ -143,14 +243,20 @@ function loadBookings() {
             
             bookings.forEach(booking => {
                 const statusClass = getStatusColor(booking.status);
+                const paymentStatusClass = getPaymentStatusColor(booking.payment_status);
                 
                 tbody.innerHTML += `
                     <tr>
                         <td>${booking.event_name}</td>
-                        <td>${booking.organizer_first_name} ${booking.organizer_last_name}</td>
-                        <td>${new Date(booking.event_date).toLocaleDateString()}</td>
+                        <td>${booking.booker_first_name} ${booking.booker_last_name}</td>
+                        <td>
+                            ${formatDate(booking.booking_date)}<br>
+                            ${formatTime(booking.start_time)} - ${formatTime(booking.end_time)}
+                        </td>
                         <td>${booking.venue_name}</td>
+                        <td>${formatCurrency(booking.total_amount)}</td>
                         <td><span class="badge bg-${statusClass}">${booking.status}</span></td>
+                        <td><span class="badge bg-${paymentStatusClass}">${booking.payment_status}</span></td>
                         <td>
                             <div class="btn-group" role="group">
                                 <button class="btn btn-sm btn-info" onclick="viewBooking(${booking.id})">
@@ -169,6 +275,9 @@ function loadBookings() {
                                         <i class="bi bi-x-circle"></i> Cancel
                                     </button>
                                 ` : ''}
+                                <button class="btn btn-sm btn-primary" onclick="showPaymentModal(${booking.id})">
+                                    <i class="bi bi-credit-card"></i> Payment
+                                </button>
                             </div>
                         </td>
                     </tr>
@@ -179,7 +288,7 @@ function loadBookings() {
             console.error('Error loading bookings:', error);
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="6" class="text-center text-danger">
+                    <td colspan="8" class="text-center text-danger">
                         Failed to load bookings. Please try again.
                     </td>
                 </tr>
@@ -205,12 +314,43 @@ function viewBooking(id) {
             // Update modal content
             document.getElementById('eventName').textContent = booking.event_name;
             document.getElementById('eventDescription').textContent = booking.event_description;
-            document.getElementById('eventDate').textContent = new Date(booking.event_date).toLocaleDateString();
+            document.getElementById('eventDate').textContent = formatDate(booking.booking_date);
+            document.getElementById('eventTime').textContent = `${formatTime(booking.start_time)} - ${formatTime(booking.end_time)}`;
             document.getElementById('eventStatus').innerHTML = `<span class="badge bg-${getStatusColor(booking.status)}">${booking.status}</span>`;
-            document.getElementById('organizerName').textContent = booking.organizer_name;
-            document.getElementById('organizerEmail').textContent = booking.organizer_email;
+            document.getElementById('bookerName').textContent = `${booking.booker_first_name} ${booking.booker_last_name}`;
+            document.getElementById('bookerEmail').textContent = booking.booker_email;
             document.getElementById('venueName').textContent = booking.venue_name;
-            document.getElementById('venueAddress').textContent = booking.venue_address;
+            document.getElementById('venueAddress').textContent = [
+                booking.street_address,
+                booking.barangay,
+                booking.city,
+                booking.country,
+                booking.zip_code
+            ].filter(Boolean).join(', ');
+            document.getElementById('totalAmount').textContent = formatCurrency(booking.total_amount);
+            document.getElementById('paymentStatus').innerHTML = `<span class="badge bg-${getPaymentStatusColor(booking.payment_status)}">${booking.payment_status}</span>`;
+
+            // Update payment history
+            const paymentHistoryBody = document.getElementById('paymentHistoryBody');
+            paymentHistoryBody.innerHTML = '';
+            if (booking.payments && booking.payments.length > 0) {
+                booking.payments.forEach(payment => {
+                    paymentHistoryBody.innerHTML += `
+                        <tr>
+                            <td>${formatDateTime(payment.payment_date)}</td>
+                            <td>${formatCurrency(payment.amount)}</td>
+                            <td>${payment.payment_method}</td>
+                            <td><span class="badge bg-${getPaymentStatusColor(payment.status)}">${payment.status}</span></td>
+                        </tr>
+                    `;
+                });
+            } else {
+                paymentHistoryBody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="text-center">No payment history</td>
+                    </tr>
+                `;
+            }
             
             // Update action buttons
             const actionsDiv = document.getElementById('bookingActions');
@@ -234,6 +374,12 @@ function viewBooking(id) {
                     </button>
                 `;
             }
+
+            actionsDiv.innerHTML += `
+                <button type="button" class="btn btn-primary" onclick="showPaymentModal(${booking.id})">
+                    <i class="bi bi-credit-card"></i> Update Payment
+                </button>
+            `;
             
             // Show modal
             new bootstrap.Modal(document.getElementById('bookingModal')).show();
@@ -299,6 +445,47 @@ function cancelBooking(id) {
     .catch(error => {
         console.error('Error cancelling booking:', error);
         alert(error.message || 'Failed to cancel booking');
+    });
+}
+
+function showPaymentModal(bookingId) {
+    document.getElementById('paymentBookingId').value = bookingId;
+    new bootstrap.Modal(document.getElementById('paymentModal')).show();
+}
+
+function updatePayment() {
+    const bookingId = document.getElementById('paymentBookingId').value;
+    const status = document.getElementById('paymentStatus').value;
+    const method = document.getElementById('paymentMethod').value;
+    const transactionId = document.getElementById('transactionId').value;
+
+    fetch(`<?= base_url('booking/update-payment') ?>/${bookingId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            status,
+            payment_method: method,
+            transaction_id: transactionId
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(data => {
+                throw new Error(data.message || 'Failed to update payment status');
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        alert(data.message || 'Payment status updated successfully');
+        bootstrap.Modal.getInstance(document.getElementById('paymentModal')).hide();
+        loadBookings();
+    })
+    .catch(error => {
+        console.error('Error updating payment status:', error);
+        alert(error.message || 'Failed to update payment status');
     });
 }
 

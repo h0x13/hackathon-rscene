@@ -3,29 +3,38 @@
 namespace App\Controllers;
 
 use App\Models\EventPlannerEvent;
+use App\Models\EventPlannerBooking;
+use App\Models\EventPlannerBookingPayment;
 use App\Models\UserProfileModel;
 use App\Models\EventPlannerLocation;
 use App\Models\EventPlannerAddress;
 use CodeIgniter\RESTful\ResourceController;
 use CodeIgniter\API\ResponseTrait;
+use CodeIgniter\Database\BaseConnection;
 
 class BookingController extends ResourceController
 {
     use ResponseTrait;
 
     protected $eventModel;
+    protected $bookingModel;
+    protected $paymentModel;
     protected $userProfileModel;
     protected $locationModel;
     protected $addressModel;
     protected $session;
+    protected $db;
 
     public function __construct()
     {
         $this->eventModel = new EventPlannerEvent();
+        $this->bookingModel = new EventPlannerBooking();
+        $this->paymentModel = new EventPlannerBookingPayment();
         $this->userProfileModel = new UserProfileModel();
         $this->locationModel = new EventPlannerLocation();
         $this->addressModel = new EventPlannerAddress();
         $this->session = \Config\Services::session();
+        $this->db = \Config\Database::connect();
     }
 
     public function list()
@@ -35,14 +44,15 @@ class BookingController extends ResourceController
         }
 
         $filter = $this->request->getGet('filter') ?? 'all';
+        $userData = $this->session->get('user_data');
 
-        $query = $this->eventModel->select('
-                event_planner_event.*,
-                user_profile.first_name as organizer_first_name,
-                user_profile.last_name as organizer_last_name,
-                user_credential.email as organizer_email,
-                event_planner_location.lat,
-                event_planner_location.long,
+        $query = $this->bookingModel->select('
+                event_planner_booking.*,
+                event_planner_event.event_name,
+                event_planner_event.event_description,
+                user_profile.first_name as booker_first_name,
+                user_profile.last_name as booker_last_name,
+                user_credential.email as booker_email,
                 event_planner_address.name as venue_name,
                 event_planner_address.street_address,
                 event_planner_address.barangay,
@@ -50,16 +60,23 @@ class BookingController extends ResourceController
                 event_planner_address.country,
                 event_planner_address.zip_code
             ')
-            ->join('user_profile', 'user_profile.id = event_planner_event.event_organizer_id')
+            ->join('event_planner_event', 'event_planner_event.id = event_planner_booking.event_id')
+            ->join('user_profile', 'user_profile.id = event_planner_booking.booker_id')
             ->join('user_credential', 'user_credential.user_profile_id = user_profile.id')
-            ->join('event_planner_location', 'event_planner_location.id = event_planner_event.location_id')
             ->join('event_planner_address', 'event_planner_address.event_id = event_planner_event.id');
 
-        if ($filter !== 'all') {
-            $query->where('event_planner_event.status', $filter);
+        // Filter based on user type
+        if ($userData['user_type'] === 'artist') {
+            $query->where('event_planner_booking.booker_id', $userData['id']);
+        } else {
+            $query->where('event_planner_event.event_organizer_id', $userData['id']);
         }
 
-        $bookings = $query->orderBy('event_planner_event.event_date', 'DESC')->findAll();
+        if ($filter !== 'all') {
+            $query->where('event_planner_booking.status', $filter);
+        }
+
+        $bookings = $query->orderBy('event_planner_booking.created_at', 'DESC')->findAll();
 
         if ($this->request->isAJAX()) {
             return $this->respond(['bookings' => $bookings]);
@@ -68,19 +85,89 @@ class BookingController extends ResourceController
         return view('pages/venue_owners/bookings', ['bookings' => $bookings]);
     }
 
+    public function create()
+    {
+        if (!$this->session->get('user_data')) {
+            return $this->fail('Unauthorized', 401);
+        }
+
+        $json = $this->request->getJSON(true);
+        $userData = $this->session->get('user_data');
+
+        // Validate required fields
+        if (!isset($json['event_id']) || !isset($json['start_time']) || !isset($json['end_time'])) {
+            return $this->fail('Missing required fields');
+        }
+
+        // Check if the time slot is available
+        if (!$this->bookingModel->isAvailable($json['event_id'], $json['start_time'], $json['end_time'])) {
+            return $this->fail('Selected time slot is not available');
+        }
+
+        // Calculate total amount
+        $totalAmount = $this->bookingModel->calculateTotalAmount(
+            $json['event_id'],
+            $json['start_time'],
+            $json['end_time']
+        );
+
+        // Create booking
+        $bookingData = [
+            'event_id' => $json['event_id'],
+            'booker_id' => $userData['id'],
+            'booking_date' => date('Y-m-d'),
+            'start_time' => $json['start_time'],
+            'end_time' => $json['end_time'],
+            'status' => 'pending',
+            'total_amount' => $totalAmount,
+            'payment_status' => 'pending',
+            'notes' => $json['notes'] ?? null
+        ];
+
+        try {
+            $this->db->transStart();
+
+            $bookingId = $this->bookingModel->insert($bookingData);
+
+            // Create initial payment record
+            $paymentData = [
+                'booking_id' => $bookingId,
+                'amount' => $totalAmount,
+                'payment_method' => $json['payment_method'] ?? 'pending',
+                'payment_date' => date('Y-m-d H:i:s'),
+                'status' => 'pending'
+            ];
+
+            $this->paymentModel->insert($paymentData);
+
+            $this->db->transComplete();
+
+            if ($this->db->transStatus() === false) {
+                return $this->fail('Failed to create booking');
+            }
+
+            return $this->respondCreated([
+                'message' => 'Booking created successfully',
+                'booking_id' => $bookingId
+            ]);
+        } catch (\Exception $e) {
+            return $this->fail('Failed to create booking: ' . $e->getMessage());
+        }
+    }
+
     public function view($id)
     {
         if (!$this->session->get('user_data')) {
             return $this->fail('Unauthorized', 401);
         }
 
-        $booking = $this->eventModel->select('
-                event_planner_event.*,
-                user_profile.first_name as organizer_first_name,
-                user_profile.last_name as organizer_last_name,
-                user_credential.email as organizer_email,
-                event_planner_location.lat,
-                event_planner_location.long,
+        $booking = $this->bookingModel->select('
+                event_planner_booking.*,
+                event_planner_event.event_name,
+                event_planner_event.event_description,
+                user_profile.first_name as booker_first_name,
+                user_profile.last_name as booker_last_name,
+                user_credential.email as booker_email,
                 event_planner_address.name as venue_name,
                 event_planner_address.street_address,
                 event_planner_address.barangay,
@@ -88,26 +175,20 @@ class BookingController extends ResourceController
                 event_planner_address.country,
                 event_planner_address.zip_code
             ')
-            ->join('user_profile', 'user_profile.id = event_planner_event.event_organizer_id')
+            ->join('event_planner_event', 'event_planner_event.id = event_planner_booking.event_id')
+            ->join('user_profile', 'user_profile.id = event_planner_booking.booker_id')
             ->join('user_credential', 'user_credential.user_profile_id = user_profile.id')
-            ->join('event_planner_location', 'event_planner_location.id = event_planner_event.location_id')
             ->join('event_planner_address', 'event_planner_address.event_id = event_planner_event.id')
-            ->where('event_planner_event.id', $id)
+            ->where('event_planner_booking.id', $id)
             ->first();
 
         if (!$booking) {
             return $this->fail('Booking not found');
         }
 
-        // Format the data for the view
-        $booking['organizer_name'] = $booking['organizer_first_name'] . ' ' . $booking['organizer_last_name'];
-        $booking['venue_address'] = implode(', ', array_filter([
-            $booking['street_address'],
-            $booking['barangay'],
-            $booking['city'],
-            $booking['country'],
-            $booking['zip_code']
-        ]));
+        // Get payment history
+        $payments = $this->paymentModel->where('booking_id', $id)->findAll();
+        $booking['payments'] = $payments;
 
         return $this->respond(['booking' => $booking]);
     }
@@ -124,7 +205,7 @@ class BookingController extends ResourceController
             return $this->fail('Invalid status');
         }
 
-        $booking = $this->eventModel->where('id', $id)->first();
+        $booking = $this->bookingModel->find($id);
 
         if (!$booking) {
             return $this->fail('Booking not found');
@@ -141,7 +222,7 @@ class BookingController extends ResourceController
         }
 
         try {
-            $this->eventModel->update($id, [
+            $this->bookingModel->update($id, [
                 'status' => $json['status']
             ]);
 
@@ -151,13 +232,63 @@ class BookingController extends ResourceController
         }
     }
 
+    public function updatePayment($id)
+    {
+        if (!$this->session->get('user_data')) {
+            return $this->fail('Unauthorized', 401);
+        }
+
+        $json = $this->request->getJSON(true);
+        
+        if (!isset($json['status']) || !in_array($json['status'], ['pending', 'completed', 'failed', 'refunded'])) {
+            return $this->fail('Invalid payment status');
+        }
+
+        $booking = $this->bookingModel->find($id);
+
+        if (!$booking) {
+            return $this->fail('Booking not found');
+        }
+
+        try {
+            $this->db->transStart();
+
+            // Update booking payment status
+            $this->bookingModel->update($id, [
+                'payment_status' => $json['status']
+            ]);
+
+            // Create new payment record
+            $paymentData = [
+                'booking_id' => $id,
+                'amount' => $booking['total_amount'],
+                'payment_method' => $json['payment_method'] ?? 'manual',
+                'payment_date' => date('Y-m-d H:i:s'),
+                'transaction_id' => $json['transaction_id'] ?? null,
+                'status' => $json['status']
+            ];
+
+            $this->paymentModel->insert($paymentData);
+
+            $this->db->transComplete();
+
+            if ($this->db->transStatus() === false) {
+                return $this->fail('Failed to update payment status');
+            }
+
+            return $this->respond(['message' => 'Payment status updated successfully']);
+        } catch (\Exception $e) {
+            return $this->fail('Failed to update payment status: ' . $e->getMessage());
+        }
+    }
+
     public function cancel($id)
     {
         if (!$this->session->get('user_data')) {
             return $this->fail('Unauthorized', 401);
         }
 
-        $booking = $this->eventModel->where('id', $id)->first();
+        $booking = $this->bookingModel->find($id);
 
         if (!$booking) {
             return $this->fail('Booking not found');
@@ -174,7 +305,7 @@ class BookingController extends ResourceController
         }
 
         try {
-            $this->eventModel->update($id, [
+            $this->bookingModel->update($id, [
                 'status' => 'cancelled'
             ]);
 
@@ -182,5 +313,35 @@ class BookingController extends ResourceController
         } catch (\Exception $e) {
             return $this->fail('Failed to cancel booking: ' . $e->getMessage());
         }
+    }
+
+    public function checkAvailability($eventId)
+    {
+        if (!$this->session->get('user_data')) {
+            return $this->fail('Unauthorized', 401);
+        }
+
+        $date = $this->request->getGet('date');
+        if (!$date) {
+            return $this->fail('Date is required');
+        }
+
+        // Get all bookings for the event on the specified date
+        $bookings = $this->bookingModel->where('event_id', $eventId)
+            ->where('DATE(start_time)', $date)
+            ->where('status !=', 'cancelled')
+            ->where('status !=', 'rejected')
+            ->findAll();
+
+        // Create a list of unavailable time slots
+        $unavailableSlots = [];
+        foreach ($bookings as $booking) {
+            $startTime = date('H:i', strtotime($booking['start_time']));
+            $unavailableSlots[] = $startTime;
+        }
+
+        return $this->respond([
+            'unavailable_slots' => $unavailableSlots
+        ]);
     }
 } 
