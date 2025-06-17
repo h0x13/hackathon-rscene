@@ -43,7 +43,7 @@ class VenueController extends ResourceController
 
         $user_id = $this->session->get('user_data')['user_id'];
         
-        $venues = $this->venueModel->select('venue.*, venue_pin.lat, venue_pin.lon, venue_image.image_path')
+        $venues = $this->venueModel->select('venue.*, venue_pin.lat, venue_pin.lon, venue_image.id as image_id, venue_image.image_path')
             ->join('venue_pin', 'venue_pin.id = venue.pin_id')
             ->join('venue_image', 'venue_image.venue_id = venue.id', 'left')
             ->where('venue.owner_profile', $user_id)
@@ -217,7 +217,7 @@ class VenueController extends ResourceController
         }
 
         // Get venue details
-        $venue = $this->venueModel->select('venue.*, venue_pin.lat, venue_pin.lon, venue_image.image_path, venue_image.id as image_id')
+        $venue = $this->venueModel->select('venue.*, venue_pin.lat, venue_pin.lon, venue_image.id as image_id, venue_image.image_path')
             ->join('venue_pin', 'venue_pin.id = venue.pin_id')
             ->join('venue_image', 'venue_image.venue_id = venue.id', 'left')
             ->where('venue.id', $id)
@@ -232,17 +232,46 @@ class VenueController extends ResourceController
         $this->venueModel->db->transStart();
 
         try {
-            // Handle image upload/update
-            if (isset($data['current_image']) && $data['current_image'] === 'delete') {
-                // Delete image if requested
-                if ($venue['image_id']) {
-                    $old_image = $this->imageModel->find($venue['image_id']);
-                    if ($old_image) {
-                        delete_image($old_image['image_path']);
-                        $this->imageModel->delete($venue['image_id']);
+            // Handle image upload/update/removal
+            if (isset($data['remove_image']) && $data['remove_image'] === '1' && isset($data['image_id'])) {
+                log_message('debug', 'Attempting to delete image. Image ID: ' . $data['image_id']);
+                
+                // Get the current image
+                $currentImage = $this->imageModel->where('id', $data['image_id'])
+                    ->where('venue_id', $id)
+                    ->first();
+                
+                if ($currentImage) {
+                    log_message('debug', 'Found image to delete: ' . json_encode($currentImage));
+                    
+                    // Delete the image file
+                    $imagePath = WRITEPATH . 'uploads/' . $currentImage['image_path'];
+                    log_message('debug', 'Attempting to delete file at: ' . $imagePath);
+                    
+                    if (file_exists($imagePath)) {
+                        if (unlink($imagePath)) {
+                            log_message('debug', 'Successfully deleted image file');
+                        } else {
+                            log_message('error', 'Failed to delete image file');
+                        }
+                    } else {
+                        log_message('error', 'Image file does not exist at path: ' . $imagePath);
                     }
+                    
+                    // Delete the image record
+                    if ($this->imageModel->delete($currentImage['id'])) {
+                        log_message('debug', 'Successfully deleted image record from database');
+                    } else {
+                        log_message('error', 'Failed to delete image record from database');
+                    }
+                } else {
+                    log_message('error', 'No image found with ID: ' . $data['image_id'] . ' for venue: ' . $id);
                 }
             } else {
+                log_message('debug', 'Image removal not requested or missing data. remove_image: ' . 
+                    (isset($data['remove_image']) ? $data['remove_image'] : 'not set') . 
+                    ', image_id: ' . (isset($data['image_id']) ? $data['image_id'] : 'not set'));
+                
                 try {
                     $this->handleImageUpload($id, $venue['image_id']);
                 } catch (\Exception $e) {
@@ -304,7 +333,7 @@ class VenueController extends ResourceController
         $user_id = $this->session->get('user_data')['user_id'];
         
         // Get venue details to check ownership
-        $venue = $this->venueModel->select('venue.*, venue_image.image_path, venue_image.id as image_id')
+        $venue = $this->venueModel->select('venue.*, venue_image.id as image_id, venue_image.image_path')
             ->join('venue_image', 'venue_image.venue_id = venue.id', 'left')
             ->where('venue.id', $id)
             ->where('venue.owner_profile', $user_id)
