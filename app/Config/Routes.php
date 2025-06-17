@@ -66,4 +66,3 @@ $routes->group('booking', function($routes) {
     $routes->post('cancel/(:num)', 'BookingController::cancel/$1');
     $routes->get('check-availability/(:num)', 'BookingController::checkAvailability/$1');
 });
-
