@@ -196,7 +196,7 @@
 </head>
 <body>
    <!-- Navigation -->
-   <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+   <nav class="navbar navbar-expand-lg navbar-dark fixed-top p-3">
       <div class="container">
             <a class="navbar-brand" href="#hero">VenueConnect</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
