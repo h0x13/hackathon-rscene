@@ -161,7 +161,7 @@
       <div class="container">
          <h1>Discover Your Perfect Place with VenueConnect</h1>
          <p>Book top-tier venues for your performances with ease and confidence.</p>
-         <a href="booking.html" class="btn btn-primary">Start Booking Now</a>
+         <a href="<?= site_url('/register') ?>" class="btn btn-primary">Start Booking Now</a>
       </div>
    </section>
 
@@ -220,7 +220,7 @@
                   <div class="p-3">
                      <h5>The Grand Theater</h5>
                      <p>New York, NY | Capacity: 500</p>
-                     <a href="booking.html" class="btn btn-outline-primary">Book Now</a>
+                     <a href="<?= site_url('/register') ?>" class="btn btn-outline-primary">Book Now</a>
                   </div>
                </div>
             </div>
@@ -232,7 +232,7 @@
                   <div class="p-3">
                      <h5>Starlight Hall</h5>
                      <p>Los Angeles, CA | Capacity: 300</p>
-                     <a href="booking.html" class="btn btn-outline-primary">Book Now</a>
+                     <a href="<?= site_url('/register') ?>" class="btn btn-outline-primary">Book Now</a>
                   </div>
                </div>
             </div>
@@ -244,7 +244,7 @@
                   <div class="p-3">
                      <h5>Moonlit Stage</h5>
                      <p>Chicago, IL | Capacity: 200</p>
-                     <a href="booking.html" class="btn btn-outline-primary">Book Now</a>
+                     <a href="<?= site_url('/register') ?>" class="btn btn-outline-primary">Book Now</a>
                   </div>
                </div>
             </div>
