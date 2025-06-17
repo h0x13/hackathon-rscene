@@ -41,4 +41,29 @@ $routes->get('talents/venue', 'TalentController::venues');
 $routes->post('talents/saveEvent', 'TalentController::saveEvent');
 $routes->get('talents/allEvents', 'TalentController::allEvents');
 $routes->get('talents/talentsEvents', 'TalentController::talentsEvents');
+$routes->get('talents/getVenues', 'TalentController::getVenues');
+
+// Venue Owner Routes
+$routes->get('dashboard', 'VenueController::dashboard');
+
+// Venue Management Routes
+$routes->group('venue', function($routes) {
+    $routes->get('list', 'VenueController::list');
+    $routes->post('add', 'VenueController::add');
+    $routes->get('view/(:num)', 'VenueController::view/$1');
+    $routes->get('edit/(:num)', 'VenueController::edit/$1');
+    $routes->post('edit/(:num)', 'VenueController::edit/$1');
+    $routes->get('delete/(:num)', 'VenueController::delete/$1');
+});
+
+// Booking Management Routes
+$routes->group('booking', function($routes) {
+    $routes->get('list', 'BookingController::list');
+    $routes->post('create', 'BookingController::create');
+    $routes->get('view/(:num)', 'BookingController::view/$1');
+    $routes->post('update-status/(:num)', 'BookingController::updateStatus/$1');
+    $routes->post('update-payment/(:num)', 'BookingController::updatePayment/$1');
+    $routes->post('cancel/(:num)', 'BookingController::cancel/$1');
+    $routes->get('check-availability/(:num)', 'BookingController::checkAvailability/$1');
+});
 

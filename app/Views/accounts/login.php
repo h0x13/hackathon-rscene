@@ -186,11 +186,11 @@
                     setTimeout(() => {
                         window.location.href = "<?= site_url('/talents') ?>";
                     }, 1000);
-                } else {
-                    showAlert(response.data.message || 'An error occurred', 'danger');
+                } else {n
+                    showAlert(response.data.message || 'Invalid Email or Password', 'danger');
                 }
             } catch (error) {
-                showAlert(error.response?.data?.message || 'An error occurred', 'danger');
+                showAlert(error.response?.data?.message || 'Invalid Email or Password', 'danger');
             }
         }
     </script>

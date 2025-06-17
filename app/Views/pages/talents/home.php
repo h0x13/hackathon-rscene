@@ -30,10 +30,11 @@ Talents - Home
 <?= $this->section('content') ?>
 
 <div class="text-center mb-4">
-    <h1 class="fw-bold mb-2">🎵 Discover Local Events</h1>
+    <h1 class="fw-bold mb-2">🎵 Discover Local Books and Events 📖</h1>
     <p class="text-muted">Find and track concerts happening near you. Explore, attend, and enjoy the local music scene!</p>
 </div>
 
+<<<<<<< HEAD
   <div class="row g-4 mb-5 pe-0 pe-md-5">
     
   <div class="container d-flex align-items-center justify-content-between mt-5">
@@ -42,7 +43,17 @@ Talents - Home
       View All <i class="bi bi-arrow-right"></i>
     </a>
   </div>
+=======
+<form class="search-bar mb-4">
+    <div class="input-group">
+        <input type="text" class="form-control" placeholder="Search for events, artists, or locations...">
+        <button class="btn btn-primary" type="submit"><i class="bi bi-search"></i></button>
+    </div>
+</form>
+>>>>>>> b55c224ff410ac9401caa1b7ebcdc9f92b6207d2
 
+<h4 class="mb-3"><i class="bi bi-calendar"></i> Upcoming Events</h4>
+  <div class="row g-4 mb-5 pe-0 pe-md-5">
     <?php if (!empty($events)): ?>
     <?php foreach ($events as $event): ?>
       <div class="col-md-4">
@@ -106,7 +117,7 @@ Talents - Home
 <?= $this->section('local_javascript') ?>
 
 <script>
-  const venues = <?= json_encode($eventsForMap) ?>;
+  const venues = <?= json_encode($events) ?>;
 
     document.addEventListener('DOMContentLoaded', function() {
         const map = L.map('map').setView([11.2445, 125.0036], 12);

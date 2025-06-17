@@ -312,10 +312,17 @@ class TalentController extends BaseController
             'event_date'          => $this->request->getPost('event_date'),
             'status'              => 'pending',
         ];
+        log_message('debug', 'Event description length before insert: ' . strlen($eventData['event_description']));
         $eventInsert = $eventModel->insert($eventData);
         log_message('debug', 'Event insert result: ' . var_export($eventInsert, true));
         if (!$eventInsert) {
-            $session->setFlashdata('error', 'Failed to insert event.');
+            $errors = $eventModel->errors();
+            if (!empty($errors)) {
+                $session->setFlashdata('error', 'Failed to insert event: ' . implode(', ', $errors));
+            } else {
+                $session->setFlashdata('error', 'Failed to insert event due to an unknown error.');
+            }
+            log_message('error', 'Event insertion failed: ' . var_export($errors, true));
             return redirect()->back();
         }
         $event_id = $eventModel->getInsertID();
@@ -324,6 +331,8 @@ class TalentController extends BaseController
         $addressModel = new EventPlannerAddress();
         $addressData = [
             'event_id'       => $event_id,
+            'name'           => $this->request->getPost('event_name'),
+            'description'    => $this->request->getPost('description'),
             'street_address' => $this->request->getPost('street_address'),
             'barangay'       => $this->request->getPost('barangay'),
             'city'           => $this->request->getPost('city'),
@@ -333,7 +342,13 @@ class TalentController extends BaseController
         $addressInsert = $addressModel->insert($addressData);
         log_message('debug', 'Address insert result: ' . var_export($addressInsert, true));
         if (!$addressInsert) {
-            $session->setFlashdata('error', 'Failed to insert address.');
+            $errors = $addressModel->errors();
+            if (!empty($errors)) {
+                $session->setFlashdata('error', 'Failed to insert address: ' . implode(', ', $errors));
+            } else {
+                $session->setFlashdata('error', 'Failed to insert address due to an unknown error.');
+            }
+            log_message('error', 'Address insertion failed: ' . var_export($errors, true));
             return redirect()->back();
         }
 
