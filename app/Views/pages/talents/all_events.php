@@ -59,7 +59,7 @@ VenueConnect - All Upcoming Events
             border-radius: 15px;
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
             transition: all 0.4s ease;
-            background: white;
+            background: #ffffff; /* White background for cards */
             overflow: hidden;
             animation: fadeInUp 0.8s ease-in-out;
         }
@@ -173,6 +173,30 @@ VenueConnect - All Upcoming Events
             color: #2c3e50;
             animation: fadeIn 0.5s ease-in-out;
         }
+        .modal-content {
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            border: none;
+            background: white;
+            animation: fadeInUp 0.5s ease-in-out;
+        }
+        .modal-header {
+            background: linear-gradient(to right, #6e8efb, #a777e3);
+            color: white;
+            border-radius: 15px 15px 0 0;
+            border-bottom: none;
+        }
+        .modal-title {
+            font-weight: 600;
+            font-size: 1.25rem;
+        }
+        .modal-body {
+            padding: 1.5rem;
+        }
+        .img-fluid.rounded {
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
         @keyframes fadeInUp {
             from { opacity: 0; transform: translateY(30px); }
             to { opacity: 1; transform: translateY(0); }
@@ -188,7 +212,7 @@ VenueConnect - All Upcoming Events
 <div class="container py-5">
     <div class="header-section">
         <h1>🎵 All Upcoming Events</h1>
-        <p>Discover and explore concerts and events happening near you!</p>
+        <p class="text-white">Discover and explore concerts and events happening near you!</p>
     </div>
 
     <div class="d-flex align-items-center justify-content-between mb-4">
@@ -222,6 +246,31 @@ VenueConnect - All Upcoming Events
                                 data-bs-target="#eventModal<?= esc($event['id']) ?>">
                                 View Details
                             </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Event Details Modal -->
+                <div class="modal fade" id="eventModal<?= esc($event['id']) ?>" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title"><?= esc($event['event_name']) ?></h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <img src="https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=crop&w=400&q=80" class="img-fluid rounded" alt="Event Image">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6 class="fw-bold mb-3">Event Details</h6>
+                                        <p><strong>Date:</strong> <?= date('F j, Y', strtotime($event['event_date'])) ?></p>
+                                        <p><strong>Location:</strong> <?= esc($event['city']) ?>, <?= esc($event['country'] ?? '') ?></p>
+                                        <p><strong>Description:</strong> <?= esc($event['event_description'] ?? 'No description available.') ?></p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

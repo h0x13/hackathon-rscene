@@ -252,7 +252,7 @@ Talents - Profile Setting
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         `;
         alertContainer.appendChild(alertDiv);
-        
+
         // Auto dismiss after 5 seconds
         setTimeout(() => {
             alertDiv.remove();
@@ -261,17 +261,17 @@ Talents - Profile Setting
 
     async function handleSubmit(event) {
         event.preventDefault();
-        
+
         const form = event.target;
         const formData = new FormData(form);
-        
+
         const data = {
             first_name: formData.get('first_name'),
             middle_name: formData.get('middle_name'),
             last_name: formData.get('last_name'),
             birthdate: formData.get('birthdate')
         };
-        
+
         try {
             const response = await axios.post('{% url "update_profile" %}', data, {
                 headers: {
@@ -279,7 +279,7 @@ Talents - Profile Setting
                     'Content-Type': 'application/json'
                 }
             });
-            
+
             if (response.data.success) {
                 showAlert(response.data.message, 'success');
                 // Update profile display
