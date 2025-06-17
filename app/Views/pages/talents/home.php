@@ -224,14 +224,14 @@ VenueConnect - Discover Events
         <input type="text" class="form-control" placeholder="Search events by name or location..." aria-label="Search events">
     </div>
 
-    <div class="d-flex align-items-center justify-content-between mb-4 pe-5">
+<div class="row g-4 mb-5 pe-5">  
+    <div class="d-flex align-items-center justify-content-between mb-4">
         <h4 class="section-title"><i class="bi bi-calendar me-2"></i>Upcoming Events</h4>
         <a href="<?= site_url('/talents/allEvents') ?>" class="btn btn-primary">
             View All <i class="bi bi-arrow-right ms-1"></i>
         </a>
     </div>
 
-    <div class="row g-4 mb-5">  
         <?php if (!empty($events)): ?>
             <?php foreach ($events as $event): ?>
                 <div class="col-md-4">
@@ -293,7 +293,7 @@ VenueConnect - Discover Events
 
 
     <h4 class="section-title mb-4">Event Locations</h4>
-    <div class="map-container">
+    <div class="map-container pe-5">
         <div id="map"></div>
     </div>
 </div>

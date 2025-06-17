@@ -302,10 +302,10 @@ VenueConnect - Home
         <p class="">Find and track concerts happening near you. Explore, attend, and enjoy the local music scene!</p>
     </div>
 
-    <div class="row g-4 mb-5">
-        <div class="d-flex align-items-center justify-content-between mb-4 pe-5">
+    <div class="row g-4 mb-5 pe-5">
+        <div class="d-flex align-items-center justify-content-between mb-4 ">
             <h4 class="section-title"><i class="bi bi-calendar-week me-2"></i>Your Events</h4>
-            <a href="<?= site_url('/talents/talentsEvents') ?>" class="btn btn-primary me-5">
+            <a href="<?= site_url('/talents/talentsEvents') ?>" class="btn btn-primary">
                 View All <i class="bi bi-arrow-right ms-1"></i>
             </a>
         </div>

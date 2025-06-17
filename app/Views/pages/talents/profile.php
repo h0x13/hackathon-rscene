@@ -249,8 +249,8 @@
                     <input type="text" class="form-control" id="base_rate" name="base_rate" value="<?= $user_credential['artist']['base_rate'] ?? '' ?>" required>
                 </div>
                 <div class="col-md-6 mb-3">
-                    <label for="mod" class="form-label">Mode of Payments</label>
-                    <input type="text" class="form-control" id="mod" name="mod" value="<?= $user_credential['artist']['mode_of_payments'] ?? '' ?>">
+                    <label for="mode_of_payments" class="form-label">Mode of Payments</label>
+                    <input type="text" class="form-control" id="mode_of_payments" name="mode_of_payments" value="<?= $user_credential['artist']['mode_of_payments'] ?? '' ?>">
                 </div>
             </div>
         </div>
@@ -295,7 +295,7 @@
             artist_name: form.get('artist_name'),
             talent_fee: form.get('talent_fee'),
             base_rate: form.get('base_rate'),
-            mode_of_payments: form.get('mod'),
+            mode_of_payments: form.get('mode_of_payments'),
         };
 
         try {
