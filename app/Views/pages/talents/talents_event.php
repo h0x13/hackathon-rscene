@@ -37,7 +37,7 @@ Talents - Home
   <div class="row g-4 mb-5 pe-0 pe-md-5">
     
   <div class="container d-flex align-items-center justify-content-between mt-5">
-    <h4 class="mb-3"><i class="bi bi-calendar"></i> Upcoming Events</h4>
+    <h4 class="mb-3"><i class="bi bi-calendar"></i>Your Upcoming Events</h4>
     <a href="<?= site_url('/talents/events') ?>" role="button" class="btn btn-sm btn-secondary mb-0"><i class="bi bi-arrow-left"></i> Back</a>
   </div>
 

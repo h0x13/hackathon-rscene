@@ -37,7 +37,7 @@ Talents - Home
   <div class="row g-4 mb-5 pe-0 pe-md-5">
     
   <div class="container d-flex align-items-center justify-content-between mt-5">
-    <h4 class="mb-3"><i class="bi bi-calendar"></i> Upcoming Events <?= esc($user_id) ?> <?= esc($id) ?></h4>
+    <h4 class="mb-3"><i class="bi bi-calendar"></i> Upcoming Events</h4>
     <a href="<?= site_url('/talents/allEvents') ?>" class="btn btn-sm btn-primary mb-0">
       View All <i class="bi bi-arrow-right"></i>
     </a>
