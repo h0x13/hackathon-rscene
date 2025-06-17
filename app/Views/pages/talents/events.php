@@ -84,7 +84,7 @@ Talents - Home
             <p class="card-text">
               <small class="text-muted">
                 <i class="bi bi-calendar-event"></i>
-                <?= date('F j, Y', strtotime($event['event_date'])) ?>
+                <?= date('F j, Y', strtotime($event['event_startdate'])) ?>
               </small>
             </p>
             <button 
@@ -98,30 +98,7 @@ Talents - Home
       </div>
 
       <!-- Event Details Modal -->
-      <div class="modal fade" id="eventModal<?= esc($event['id']) ?>" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title"><?= esc($event['event_name']) ?></h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-              <div class="row">
-                <div class="col-md-6">
-                  <img src="https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=crop&w=400&q=80" class="img-fluid rounded" alt="Event Image">
-                </div>
-                <div class="col-md-6">
-                  <h6>Event Details</h6>
-                  <p><strong>Date:</strong> <?= date('F j, Y', strtotime($event['event_date'])) ?></p>
-                  <p><strong>Location:</strong> <?= esc($event['city']) ?>, <?= esc($event['province'] ?? '') ?></p>
-                  <p><strong>Description:</strong> <?= esc($event['event_description']) ?></p>
-                  
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      
     <?php endforeach; ?>
   <?php else: ?>
     <div class="col-12">
@@ -206,12 +183,8 @@ Talents - Home
             <input type="text" class="form-control" id="barangay" name="barangay" readonly>
           </div>
           <div class="col-md-4">
-            <label>City</label>
+            <label>City/Province</label>
             <input type="text" class="form-control" id="city" name="city" readonly>
-          </div>
-          <div class="col-md-4">
-            <label>Province</label>
-            <input type="text" class="form-control" id="province" name="province" readonly>
           </div>
           <div class="col-md-4">
             <label>ZIP Code</label>
@@ -220,6 +193,7 @@ Talents - Home
 
           <input type="hidden" name="lat" id="lat" readonly>
           <input type="hidden" name="lang" id="lang" readonly>
+          <input type="hidden" name="venue_id" id="venue_id" readonly>
 
 
         <div class="modal-footer">
@@ -289,7 +263,7 @@ Talents - Home
     const venues = <?= json_encode($venues) ?>;
 
     document.addEventListener('DOMContentLoaded', function() {
-        const map = L.map('map').setView([11.2445, 125.0036], 12);
+        const map = L.map('map').setView([11.7693, 124.8824], 10);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
@@ -297,7 +271,7 @@ Talents - Home
         venues.forEach(venue => {
             const marker = L.marker([venue.lat, venue.lng]).addTo(map);
             marker.bindPopup(
-                `<strong><span class="text-info fs-6">P${venue.rent}</span> - ${venue.name}</strong><br>${venue.city}, ${venue.province}<br>${venue.description}<br>
+                `<strong><span class="text-info fs-6">P${venue.rent}</span> - ${venue.venue_name}</strong><br>${venue.barangay}, ${venue.city}<br>${venue.venue_description}<br>
                 <button class="btn btn-primary btn-sm mt-2" data-bs-toggle="modal" data-bs-target="#addEventModal" data-venue="${encodeURIComponent(JSON.stringify(venue))}"
         onclick="bookVenue(JSON.parse(decodeURIComponent(this.dataset.venue)))">Book this venue</button>`
             )
@@ -314,6 +288,7 @@ Talents - Home
       document.querySelector('#province').value = venue.province || '';
       document.querySelector('#lang').value = venue.lng || '';
       document.querySelector('#lat').value = venue.lat || '';
+      document.querySelector('#venue_id').value = venue.id || '';
       document.querySelector('[name="zip_code"]').value = venue.zip_code || '';
     }
 

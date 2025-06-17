@@ -7,9 +7,28 @@ use App\Models\EventPerformance;
 use App\Models\VenueModel;
 use App\Models\VenuePin;
 use App\Models\BookingModel;
+use App\Models\UserProfileModel;
+use App\Models\UserCredentialModel;
+use App\Models\ArtistModel;
+use CodeIgniter\API\ResponseTrait;
+
 
 class TalentController extends BaseController
 {
+    use ResponseTrait;
+
+    protected $userProfileModel;
+    protected $userCredentialModel;
+    protected $session;
+    protected $email;
+
+    public function __construct()
+    {
+        $this->userProfileModel = new UserProfileModel();
+        $this->userCredentialModel = new UserCredentialModel();
+        $this->session = \Config\Services::session();
+        $this->email = \Config\Services::email();
+    }
     public function home()
     {
         $session = session();
@@ -42,6 +61,7 @@ class TalentController extends BaseController
             ->limit(3)
             ->findAll();
 
+            
         $eventForMap = $eventModel
             ->select('
                 event_performance.id,
@@ -100,55 +120,31 @@ class TalentController extends BaseController
                 ->limit(3);
 
             $events = $builder->findAll();
-            $venues = [
-            [
-                'name' => 'Tacloban City Convention Center',
-                'lat' => 11.2445,
-                'lng' => 125.0036,
-                'street' => 'San Jose',
-                'barangay' => 'Barangay 2',
-                'city' => 'Tacloban City',
-                'province' => 'Leyte',
-                'zip_code' => '5720',
-                'description' => 'A large venue for concerts and events.',
-                'rent' => 5000
-            ],
-            [
-                'name' => 'Ormoc Superdome',
-                'lat' => 15.0157,
-                'lng' => 124.6075,
-                'street' => 'San Jose',
-                'barangay' => 'Barangay 2',
-                'city' => 'Calbalogan City',
-                'province' => 'Leyte',
-                'zip_code' => '5720',
-                'description' => 'Indoor arena for sports and music events.',
-                'rent' => 6000
-            ],
-            [
-                'name' => 'Ormoc Grand Pavilion',
-                'lat' => 11.0157,
-                'lng' => 124.6075,
-                'street' => 'Real Street',
-                'barangay' => 'Barangay Dolores',
-                'city' => 'Calbalogan City',
-                'province' => 'Leyte',
-                'zip_code' => '5720',
-                'description' => 'Indoor arena for sports and music events.',
-                'rent' => 7000
-            ],
 
-        ];
+            $venueModel = new VenueModel();
+            $venues = $venueModel
+                ->select('
+                    venue.id,
+                    venue.venue_name,
+                    venue.venue_description,
+                    venue.street,
+                    venue.barangay,
+                    venue.city,
+                    venue.zip_code,
+                    venue.rent,
+                    venue.capacity,
+                    venue.owner_profile,
+                    venue_pin.lat,
+                    venue_pin.lon as lng
+                ')
+                ->join('venue_pin', 'venue.pin_id = venue_pin.id')
+                ->findAll();
 
         $data = [
             'events' => $events,
             'venues' => $venues
         ];  
         return view('pages/talents/events', $data);
-    }
-
-    public function profile(){
-        return view('pages/talents/profile');
     }
 
     public function venues()
@@ -177,42 +173,14 @@ class TalentController extends BaseController
         $session = session();
         $userId = $session->get('user_data')['user_id'] ?? null;
         if ($this->request->getMethod() === 'POST') {
-            // 1. Save Location
-            $locationModel = new VenuePin();
-            $locationData = [
-                'lon' => $this->request->getPost('lang'),
-                'lat'  => $this->request->getPost('lat'),
-            ];
-            $locationInsert = $locationModel->insert($locationData);
-            log_message('debug', 'Location insert result: ' . var_export($locationInsert, true));
-            if (!$locationInsert) {
-                $session->setFlashdata('error', 'Failed to insert location.');
-                return redirect()->back();
-            }
-            $location_id = $locationModel->getInsertID();
-
-            // 2. Save Venue Information
-            $venueModel = new VenueModel();
-            $addressData = [
-                'venue_name'     => $this->request->getPost('event_name'),
-                'pin_id'         => $location_id,
-                'owner_profile' => $userId,
-                'venue_description'    => $this->request->getPost('description'),
-                'street_address' => $this->request->getPost('street_address'),
-                'barangay'       => $this->request->getPost('barangay'),
-                'city'           => $this->request->getPost('city'),
-                'country'        => 'Philippines',
-                'zip_code'       => $this->request->getPost('zip_code'),
-            ];
-            $addressInsert = $venueModel->insert($addressData);
-
-
-            // 2. Save Event
+            
+            // 1. Save Event
             $eventModel = new EventPerformance();
             $eventData = [
+                'venue_id'           => $this->request->getPost('venue_id'),
+                'organizer_id'        => $userId,
                 'event_name'          => $this->request->getPost('event_name'),
                 'event_description'   => $this->request->getPost('description'),
-                'organizer_id'        => $userId,
                 'event_startdate'     => $this->request->getPost('start_date'),
                 'event_enddate'       => $this->request->getPost('end_date'),
                 'event_status'        => 'Scheduled',
@@ -243,18 +211,6 @@ class TalentController extends BaseController
 
             $bookingInsert = $booking->insert($bookingData);
             $bookingId = $booking->getInsertID();
-            
-            log_message('debug', 'Address insert result: ' . var_export($addressInsert, true));
-            if (!$addressInsert) {
-                $errors = $venueModel->errors();
-                if (!empty($errors)) {
-                    $session->setFlashdata('error', 'Failed to insert address: ' . implode(', ', $errors));
-                } else {
-                    $session->setFlashdata('error', 'Failed to insert address due to an unknown error.');
-                }
-                log_message('error', 'Address insertion failed: ' . var_export($errors, true));
-                return redirect()->back();
-            }
 
             $session->setFlashdata('success', 'Event created successfully!');
             return redirect()->to('/talents/events');
@@ -316,5 +272,96 @@ class TalentController extends BaseController
             ->findAll();
 
         return view('pages/talents/talents_event', ['events' => $events]);
+    }
+
+    public function profile(){
+        if (!$this->session->get('user_data')) {
+            return redirect()->to('login');
+        }
+        log_message('debug', 'Profile update POST data: ');
+
+        if ($this->request->getMethod() === 'POST') {
+            $json = $this->request->getJSON(true);
+            $user_id = $this->session->get('user_data')['user_id'];
+            $user = $this->userCredentialModel->find($user_id);
+            
+            // Debug: Log received JSON
+            log_message('debug', 'Profile update POST data: ' . json_encode($json));
+
+
+            $this->userProfileModel->update($user['user_profile_id'], [
+                'first_name' => $json['first_name'],
+                'middle_name' => $json['middle_name'] ?? null,
+                'last_name' => $json['last_name'],
+                'birthdate' => $json['birthdate']
+            ]);
+
+            log_message('debug', 'Updated user_profile_id: ' . $user['user_profile_id']);
+
+
+            // Update artist info (artist_name, talent_fee, base_rate, mode_of_payments)
+            // Adjust model/fields as per your schema
+            if (isset($json['artist_name']) || isset($json['talent_fee']) || isset($json['base_rate']) || isset($json['mod'])) {
+                $artistModel = new ArtistModel();
+                $artist = $artistModel->where('performer', $user_id)->first();
+                $artistData = [
+                    'artist_name' => $json['artist_name'] ?? null,
+                    'price_range' => $json['talent_fee'] ?? null,
+                    'hours' => $json['base_rate'] ?? null,
+                    'payment_option' => $json['mod'] ?? null,
+                    'performer' => $user_id
+                ];
+                
+                log_message('debug', 'Artist data to save: ' . json_encode($artistData));
+
+                if ($artist) {
+                    // Update existing artist record
+                    $artistModel->update($artist['id'], $artistData);
+                } else {
+                    // Insert new artist record
+                    $artistModel->insert($artistData);
+                }
+            }
+
+            return $this->respond([
+                'success' => true,
+                'message' => 'Profile updated successfully!'
+            ]);
+        }
+
+        $user_id = $this->session->get('user_data')['user_id'];
+        $user_credential = $this->userCredentialModel->with('user_profile')->find($user_id);
+
+        if (!$user_credential) {
+            return redirect()->to('login');
+        }
+
+        $artistModel = new ArtistModel();
+        $artist = $artistModel->where('performer', $user_id)->first();
+
+        // Format the data for the view
+        $data = [
+            'user_credential' => [
+                'id' => $user_credential['id'],
+                'email' => $user_credential['email'],
+                'user_type' => $user_credential['user_type'],
+                'user_profile' => [
+                    'first_name' => $user_credential['first_name'],
+                    'middle_name' => $user_credential['middle_name'],
+                    'last_name' => $user_credential['last_name'],
+                    'birthdate' => $user_credential['birthdate'],
+                    'image_path' => $user_credential['image_path']
+                ],
+                // Add artist info to the view data
+                'artist' => isset($artist) ? [
+                    'artist_name' => $artist['artist_name'],
+                    'talent_fee' => $artist['price_range'],
+                    'base_rate' => $artist['hours'],
+                    'mode_of_payments' => $artist['payment_option']
+                ] : null
+            ]
+        ];
+        
+        return view('pages/talents/profile', $data);
     }
 }

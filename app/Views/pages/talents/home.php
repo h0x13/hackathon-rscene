@@ -57,7 +57,7 @@ Talents - Home
             <p class="card-text">
               <small class="text-muted">
                 <i class="bi bi-calendar-event"></i>
-                <?= date('F j, Y', strtotime($event['event_date'])) ?>
+                <?= date('F j, Y', strtotime($event['event_startdate'])) ?>
               </small>
             </p>
             <button 
@@ -68,6 +68,30 @@ Talents - Home
             </button>
           </div>
         </div>
+        <div class="modal fade" id="eventModal<?= esc($event['id']) ?>" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title"><?= esc($event['event_name']) ?></h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <div class="row">
+                <div class="col-md-6">
+                  <img src="https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=crop&w=400&q=80" class="img-fluid rounded" alt="Event Image">
+                </div>
+                <div class="col-md-6">
+                  <h6>Event Details</h6>
+                  <p><strong>Date:</strong> <?= date('F j, Y', strtotime($event['event_startdate'])) ?></p>
+                  <p><strong>Location:</strong> <?= esc($event['city']) ?>, <?= esc($event['province'] ?? '') ?></p>
+                  <p><strong>Description:</strong> <?= esc($event['event_description']) ?></p>
+                  
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
       </div>
     <?php endforeach; ?>
   <?php else: ?>
@@ -106,8 +130,9 @@ Talents - Home
 <?= $this->section('local_javascript') ?>
 
 <script>
-  const venues = <?= json_encode($events) ?>;
-
+  const venues = <?= json_encode($eventsForMap) ?>;
+  
+    console.log(venues);
     document.addEventListener('DOMContentLoaded', function() {
         const map = L.map('map').setView([11.2445, 125.0036], 12);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
