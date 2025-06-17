@@ -63,7 +63,7 @@
     <!-- Custom JS -->
     <script src="<?= base_url('js/script.js') ?>"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() { 
+        document.addEventListener('DOMContentLoaded', function() {
             <?php if(session()->getFlashdata('error')): ?>
                 Swal.fire({
                     icon: 'error',
@@ -71,7 +71,7 @@
                     text: '<?= session()->getFlashdata('error'); ?>'
                 });
             <?php endif; ?>
-            
+
             <?php if(session()->getFlashdata('success')): ?>
                 Swal.fire({
                     icon: 'success',
