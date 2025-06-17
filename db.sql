@@ -51,5 +51,6 @@ CREATE TABLE event_planner_address (
     city VARCHAR(255) NOT NULL,
     country VARCHAR(255) NOT NULL,
     zip_code VARCHAR(20) NOT NULL,
+    rent DECIMAL(10,2) NOT NULL DEFAULT 0.00,
     FOREIGN KEY (event_id) REFERENCES event_planner_event(id) ON DELETE CASCADE
 ); 

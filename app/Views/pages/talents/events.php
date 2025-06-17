@@ -26,7 +26,7 @@ Talents - Home
       </style>
 
 <?= $this->endSection() ?>
-      
+
 <?= $this->section('content') ?>
 
 <div class="text-center mb-4">
@@ -41,7 +41,7 @@ Talents - Home
       View All <i class="bi bi-arrow-right"></i>
     </a>
   </div>
-        
+
 <?php if (!empty($events)): ?>
     <?php foreach ($events as $event): ?>
       <div class="col-md-4">
@@ -59,9 +59,9 @@ Talents - Home
                 <?= date('F j, Y', strtotime($event['event_date'])) ?>
               </small>
             </p>
-            <button 
-              class="btn btn-outline-primary btn-sm" 
-              data-bs-toggle="modal" 
+            <button
+              class="btn btn-outline-primary btn-sm"
+              data-bs-toggle="modal"
               data-bs-target="#eventModal<?= esc($event['id']) ?>">
               View Details
             </button>
@@ -76,7 +76,7 @@ Talents - Home
   <?php endif; ?>
 </div>
 
-     
+
 
 
 
@@ -103,7 +103,7 @@ Talents - Home
       </div>
     </div>
   </div>
-</div>  
+</div>
 
 <!-- Modal Form -->
 <div class="modal fade" id="addEventModal" tabindex="-1" aria-labelledby="addEventModalLabel" aria-hidden="true">
@@ -211,4 +211,3 @@ Talents - Home
 </script>
 
 <?= $this->endSection() ?>
-

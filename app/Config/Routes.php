@@ -41,6 +41,7 @@ $routes->get('talents/venue', 'TalentController::venues');
 $routes->post('talents/saveEvent', 'TalentController::saveEvent');
 $routes->get('talents/allEvents', 'TalentController::allEvents');
 $routes->get('talents/talentsEvents', 'TalentController::talentsEvents');
+$routes->get('talents/getVenues', 'TalentController::getVenues');
 
 // Venue Owner Routes
 $routes->get('dashboard', 'VenueController::dashboard');
