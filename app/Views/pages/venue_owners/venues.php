@@ -1,409 +1,227 @@
 <?= $this->extend('layouts/base') ?>
 
-<?= $this->section('title') ?>
-VenueConnect - My Venues
-<?= $this->endSection() ?>
+<?= $this->section('title') ?>My Venues<?= $this->endSection() ?>
 
 <?= $this->section('local_css') ?>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <style>
-        body {
-            background: linear-gradient(135deg, #6e8efb, #a777e3);
-            font-family: 'Poppins', sans-serif;
-            color: #2c3e50;
-            min-height: 100vh;
-            position: relative;
-            overflow-x: hidden;
-        }
-        body::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1), transparent 70%);
-            z-index: -1;
-        }
-        .container-fluid {
-            position: relative;
-            z-index: 1;
-        }
-        h1 {
-            font-weight: 700;
-            font-size: 2rem;
-            color: #2c3e50;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            position: relative;
-            display: inline-block;
-            animation: fadeInUp 0.8s ease-in-out;
-        }
-        h1::after {
-            content: '';
-            display: block;
-            width: 60px;
-            height: 3px;
-            background: linear-gradient(to right, #6e8efb, #a777e3);
-            margin-top: 0.5rem;
-            border-radius: 2px;
-        }
-        .card {
-            border-radius: 15px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
-            background: rgba(255, 255, 255, 0.98);
-            border: none;
-            animation: fadeInUp 0.8s ease-in-out;
-        }
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
-        }
-        .card-header {
-            background: white;
-            border-bottom: 1px solid #e0e0e0;
-            border-radius: 15px 15px 0 0;
-            padding: 1rem 1.5rem;
-        }
-        .card-header h5 {
-            font-size: 1.2rem;
-            font-weight: 600;
-            color: #2c3e50;
-            margin: 0;
-        }
-        .card-body {
-            padding: 1.5rem;
-        }
-        .card-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 0.75rem;
-        }
-        .card-text {
-            font-size: 0.9rem;
-            color: #6c757d;
-            margin-bottom: 0.5rem;
-        }
-        .btn-primary {
-            background: linear-gradient(to right, #6e8efb, #a777e3);
-            border: none;
-            font-weight: 500;
-            border-radius: 8px;
-            padding: 0.5rem 1rem;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-        .btn-primary:hover {
-            background: linear-gradient(to right, #5a75e8, #8e5ed0);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(110, 142, 251, 0.5);
-        }
-        .btn-primary::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            transition: 0.5s;
-        }
-        .btn-primary:hover::after {
-            left: 100%;
-        }
-        .btn-danger {
-            background: #dc3545;
-            border: none;
-            font-weight: 500;
-            border-radius: 8px;
-            padding: 0.5rem 1rem;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-        .btn-danger:hover {
-            background: #c82333;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
-        }
-        .btn-danger::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            transition: 0.5s;
-        }
-        .btn-danger:hover::after {
-            left: 100%;
-        }
-        .btn-secondary {
-            background: #6c757d;
-            border: none;
-            font-weight: 500;
-            border-radius: 8px;
-            padding: 0.5rem 1rem;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-        .btn-secondary:hover {
-            background: #5a6268;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
-        }
-        .btn-secondary::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            transition: 0.5s;
-        }
-        .btn-secondary:hover::after {
-            left: 100%;
-        }
-        .modal-content {
-            border-radius: 15px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-            border: none;
-            background: white;
-            animation: fadeInUp 0.5s ease-in-out;
-        }
-        .modal-header {
-            background: linear-gradient(to right, #6e8efb, #a777e3);
-            color: white;
-            border-radius: 15px 15px 0 0;
-            border-bottom: none;
-        }
-        .modal-title {
-            font-weight: 600;
-            font-size: 1.25rem;
-        }
-        .modal-body {
-            padding: 1.5rem;
-        }
-        .form-label {
-            font-weight: 600;
-            color: #2c3e50;
-            font-size: 0.9rem;
-            margin-bottom: 0.5rem;
-        }
-        .form-control {
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            padding: 0.7rem;
-            font-size: 0.95rem;
-            transition: all 0.3s ease;
-            background: rgba(255, 255, 255, 0.95);
-        }
-        .form-control:focus {
-            border-color: transparent;
-            box-shadow: 0 0 10px rgba(110, 142, 251, 0.4), inset 0 0 0 2px #6e8efb;
-            outline: none;
-            background: white;
-            transform: translateY(-2px);
-        }
-        #map, [id^="editMap"] {
-            height: 300px;
-            width: 100%;
-            border-radius: 10px;
-            border: 1px solid #e0e0e0;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-        }
-        .leaflet-container {
-            z-index: 1;
-        }
-        .loading {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 2;
-            background: rgba(255, 255, 255, 0.8);
-            padding: 10px;
-            border-radius: 8px;
-            display: none;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-        }
-        .text-muted {
-            font-size: 0.9rem;
-            color: #6c757d !important;
-        }
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        .venue-image {
-            width: 100%;
-            height: 200px;
-            object-fit: cover;
-            border-radius: 4px;
-            margin-bottom: 1rem;
-        }
-        .image-preview {
-            position: relative;
-            margin-bottom: 1rem;
-            border: 2px dashed #dee2e6;
-            border-radius: 4px;
-            padding: 1rem;
-            text-align: center;
-            min-height: 200px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background-color: #f8f9fa;
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-        
-        .image-preview:hover {
-            border-color: #0d6efd;
-            background-color: #f1f3f5;
-        }
-        
-        .image-preview.dragover {
-            border-color: #0d6efd;
-            background-color: #e9ecef;
-        }
-        
-        .image-preview img {
-            max-width: 100%;
-            max-height: 200px;
-            object-fit: contain;
-            border-radius: 4px;
-        }
-        
-        .image-preview .remove-image {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: rgba(255, 255, 255, 0.9);
-            border: none;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            z-index: 2;
-            transition: all 0.2s ease;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        
-        .image-preview .remove-image:hover {
-            background: #fff;
-            transform: scale(1.1);
-            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-        }
-        
-        .image-preview .upload-placeholder {
-            color: #6c757d;
-            font-size: 0.9rem;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        
-        .image-preview .upload-placeholder i {
-            font-size: 2.5rem;
-            color: #adb5bd;
-            transition: all 0.3s ease;
-        }
-        
-        .image-preview:hover .upload-placeholder i {
-            color: #0d6efd;
-            transform: scale(1.1);
-        }
-        
-        .image-preview .upload-placeholder p {
-            margin: 0;
-        }
-        
-        .image-preview .upload-placeholder small {
-            color: #adb5bd;
-            font-size: 0.8rem;
-        }
-        
-        .image-preview.has-image {
-            border-style: solid;
-            padding: 0;
-            cursor: default;
-        }
-        
-        .image-preview.has-image:hover {
-            border-color: #dee2e6;
-            background-color: #f8f9fa;
-        }
-        
-        .image-preview.has-image .upload-placeholder {
-            display: none;
-        }
-        
-        .image-preview .progress {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: #e9ecef;
-            display: none;
-        }
-        
-        .image-preview .progress-bar {
-            background-color: #0d6efd;
-            transition: width 0.3s ease;
-        }
-        
-        .image-preview.uploading .progress {
-            display: block;
-        }
-        
-        .image-preview.uploading .upload-placeholder,
-        .image-preview.uploading img {
-            opacity: 0.5;
-        }
-        
-        .image-preview .error-message {
-            color: #dc3545;
-            font-size: 0.8rem;
-            margin-top: 0.5rem;
-            display: none;
-        }
-        
-        .image-preview.has-error .error-message {
-            display: block;
-        }
-        
-        .image-preview.has-error {
-            border-color: #dc3545;
-        }
-    </style>
+<style>
+    /* Modern Card Styling */
+    .card {
+        border: none;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .card-header {
+        background: transparent;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        padding: 1.5rem;
+    }
+
+    .card-body {
+        padding: 1.5rem;
+    }
+
+    /* Container Styling */
+    .container-fluid {
+        padding: 0;
+        max-width: 100%;
+    }
+
+    /* Modern Button Styling */
+    .btn {
+        border-radius: 8px;
+        padding: 0.6rem 1.2rem;
+        font-weight: 500;
+    }
+
+    .btn-primary {
+        background: linear-gradient(45deg, #0d6efd, #0a58ca);
+        border: none;
+        box-shadow: 0 2px 10px rgba(13, 110, 253, 0.2);
+    }
+
+    .btn-warning {
+        background: linear-gradient(45deg, #ffc107, #ffb300);
+        border: none;
+        color: #000;
+        box-shadow: 0 2px 10px rgba(255, 193, 7, 0.2);
+    }
+
+    .btn-danger {
+        background: linear-gradient(45deg, #dc3545, #c82333);
+        border: none;
+        box-shadow: 0 2px 10px rgba(220, 53, 69, 0.2);
+    }
+
+    /* Modern Modal Styling */
+    .modal-content {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .modal-header {
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        padding: 1.5rem;
+    }
+
+    .modal-body {
+        padding: 1.5rem;
+    }
+
+    .modal-footer {
+        border-top: 1px solid rgba(0, 0, 0, 0.05);
+        padding: 1.5rem;
+    }
+
+    /* Form Control Styling */
+    .form-control {
+        border-radius: 8px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        padding: 0.8rem 1rem;
+    }
+
+    .form-control:focus {
+        box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+        border-color: #0d6efd;
+    }
+
+    /* Map Styling */
+    #map, [id^="editMap"] {
+        height: 300px;
+        width: 100%;
+        border-radius: 12px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .leaflet-container {
+        z-index: 1;
+        border-radius: 12px;
+    }
+
+    /* Image Preview Styling */
+    .image-preview {
+        position: relative;
+        margin-bottom: 1.5rem;
+        border: 2px dashed rgba(0, 0, 0, 0.1);
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        min-height: 200px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #f8f9fa;
+        cursor: pointer;
+    }
+    
+    .image-preview.dragover {
+        border-color: #0d6efd;
+        background-color: #e9ecef;
+    }
+    
+    .image-preview img {
+        max-width: 100%;
+        max-height: 200px;
+        object-fit: contain;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .image-preview .remove-image {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: rgba(255, 255, 255, 0.95);
+        border: none;
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        z-index: 2;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+    
+    .image-preview .upload-placeholder {
+        color: #6c757d;
+        font-size: 0.95rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.8rem;
+    }
+    
+    .image-preview .upload-placeholder i {
+        font-size: 3rem;
+        color: #adb5bd;
+    }
+
+    /* Venue Card Specific Styling */
+    .venue-image {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        border-radius: 12px 12px 0 0;
+    }
+
+    .card-title {
+        font-weight: 600;
+        margin-bottom: 1rem;
+        color: #2c3e50;
+    }
+
+    .card-text {
+        color: #6c757d;
+        font-size: 0.95rem;
+        line-height: 1.6;
+    }
+
+    .btn-group {
+        gap: 0.5rem;
+    }
+
+    /* Loading State */
+    .loading {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 2;
+        background: rgba(255, 255, 255, 0.95);
+        padding: 1rem 2rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        display: none;
+    }
+
+    /* Error Message Styling */
+    .error-message {
+        color: #dc3545;
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
+        display: none;
+        padding: 0.5rem;
+        background: rgba(220, 53, 69, 0.1);
+        border-radius: 6px;
+    }
+</style>
 <?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
-<div class="container-fluid px-4 py-4">
-    <h1>My Venues</h1>
-
+<div class="container-fluid px-4">
+    <h1 class="mt-4">My Venues</h1>
+    
     <div class="card mb-4">
         <div class="card-header">
             <div class="d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">Venue List</h5>
                 <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addVenueModal">
-                    <i class="bi bi-plus-lg me-1"></i>Add New Venue
+                    <i class="bi bi-plus-lg"></i> Add New Venue
                 </button>
             </div>
         </div>
@@ -429,22 +247,21 @@ VenueConnect - My Venues
                                     <p class="card-text"><?= esc($venue['venue_description']) ?></p>
                                     <p class="card-text">
                                         <small class="text-muted">
-                                            <i class="bi bi-geo-alt me-1"></i>
-                                            <?= esc($venue['street']) ?>, <?= esc($venue['barangay']) ?>, <?= esc($venue['city']) ?>
+                                            <i class="bi bi-geo-alt"></i> <?= esc($venue['street']) ?>, <?= esc($venue['barangay']) ?>, <?= esc($venue['city']) ?>
                                         </small>
                                     </p>
                                     <p class="card-text">
                                         <small class="text-muted">
-                                            <i class="bi bi-currency-dollar me-1"></i>Rent: ₱<?= number_format($venue['rent'], 2) ?> |
-                                            <i class="bi bi-people me-1"></i>Capacity: <?= $venue['capacity'] ?>
+                                            <i class="bi bi-currency-dollar"></i> Rent: <?= number_format($venue['rent'], 2) ?> | 
+                                            <i class="bi bi-people"></i> Capacity: <?= $venue['capacity'] ?>
                                         </small>
                                     </p>
                                     <div class="btn-group">
                                         <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editVenueModal<?= $venue['id'] ?>">
-                                            <i class="bi bi-pencil me-1"></i>Edit
+                                            <i class="bi bi-pencil"></i> Edit
                                         </button>
                                         <a href="<?= base_url('venue/delete/' . $venue['id']) ?>" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this venue?')">
-                                            <i class="bi bi-trash me-1"></i>Delete
+                                            <i class="bi bi-trash"></i> Delete
                                         </a>
                                     </div>
                                 </div>
@@ -461,15 +278,16 @@ VenueConnect - My Venues
                                     </div>
                                     <div class="modal-body">
                                         <form action="<?= base_url('venue/edit/' . $venue['id']) ?>" method="POST" id="editVenueForm<?= $venue['id'] ?>" enctype="multipart/form-data">
+                                            <input type="hidden" name="image_id" value="<?= $venue['image_id'] ?? '' ?>">
+                                            <input type="hidden" name="remove_image" value="0" id="removeImage<?= $venue['id'] ?>">
                                             <div class="mb-3">
                                                 <label for="editVenueImage<?= $venue['id'] ?>" class="form-label">Venue Image</label>
                                                 <div class="image-preview <?= !empty($venue['image_path']) ? 'has-image' : '' ?>" id="editImagePreview<?= $venue['id'] ?>">
                                                     <?php if (!empty($venue['image_path'])): ?>
                                                         <img src="<?= base_url('images/serve/' . $venue['image_path']) ?>" alt="Venue Image">
-                                                        <button type="button" class="remove-image" onclick="removeEditImage(<?= $venue['id'] ?>)">
+                                                        <button type="button" class="remove-image" onclick="removeEditImage(<?= $venue['id'] ?>, <?= $venue['image_id'] ?>)">
                                                             <i class="bi bi-x-lg"></i>
                                                         </button>
-                                                        <input type="hidden" name="current_image" value="<?= $venue['image_path'] ?>">
                                                     <?php else: ?>
                                                         <div class="upload-placeholder">
                                                             <i class="bi bi-cloud-upload"></i>
@@ -491,7 +309,7 @@ VenueConnect - My Venues
                                             </div>
                                             <div class="mb-3">
                                                 <label class="form-label">Location</label>
-                                                <div id="editMap<?= $venue['id'] ?>"></div>
+                                                <div id="editMap<?= $venue['id'] ?>" style="height: 300px;"></div>
                                                 <input type="hidden" name="lat" id="editLat<?= $venue['id'] ?>" value="<?= $venue['lat'] ?>">
                                                 <input type="hidden" name="lon" id="editLon<?= $venue['id'] ?>" value="<?= $venue['lon'] ?>">
                                             </div>
@@ -573,7 +391,7 @@ VenueConnect - My Venues
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Location</label>
-                        <div id="map"></div>
+                        <div id="map" style="height: 300px;"></div>
                         <input type="hidden" name="lat" id="lat">
                         <input type="hidden" name="lon" id="lon">
                     </div>
@@ -616,10 +434,7 @@ VenueConnect - My Venues
         </div>
     </div>
 </div>
-<?= $this->endSection() ?>
 
-<?= $this->section('local_javascript') ?>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 let map, marker;
 let editMaps = {};
@@ -674,7 +489,7 @@ async function fetchAddressDetails(latlng) {
     try {
         const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latlng.lat}&lon=${latlng.lng}`);
         const data = await response.json();
-
+        
         if (data.address) {
             document.getElementById('street').value = data.address.road || '';
             document.getElementById('barangay').value = data.address.suburb || '';
@@ -691,7 +506,7 @@ async function fetchEditAddressDetails(latlng, venueId) {
     try {
         const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latlng.lat}&lon=${latlng.lng}`);
         const data = await response.json();
-
+        
         if (data.address) {
             document.getElementById(`editStreet${venueId}`).value = data.address.road || '';
             document.getElementById(`editBarangay${venueId}`).value = data.address.suburb || '';
@@ -746,11 +561,20 @@ function handleImagePreview(input, preview) {
             const removeBtn = document.createElement('button');
             removeBtn.className = 'remove-image';
             removeBtn.innerHTML = '<i class="bi bi-x-lg"></i>';
-            removeBtn.onclick = function() {
+            removeBtn.onclick = function(e) {
+                e.preventDefault();
+                e.stopPropagation();
                 input.value = '';
                 resetImagePreview(preview);
             };
             preview.appendChild(removeBtn);
+
+            // Add hidden input for remove_image
+            const removeImageInput = document.createElement('input');
+            removeImageInput.type = 'hidden';
+            removeImageInput.name = 'remove_image';
+            removeImageInput.value = '0';
+            preview.appendChild(removeImageInput);
         }
         reader.readAsDataURL(file);
     }
@@ -775,17 +599,33 @@ function resetImagePreview(preview) {
     preview.classList.remove('has-image', 'has-error', 'uploading');
 }
 
-function removeEditImage(venueId) {
+function removeEditImage(venueId, imageId) {
     const preview = document.getElementById(`editImagePreview${venueId}`);
     const input = document.getElementById(`editVenueImage${venueId}`);
-    const currentImage = preview.querySelector('input[name="current_image"]');
+    const removeImageInput = document.getElementById(`removeImage${venueId}`);
+    const imageIdInput = document.querySelector(`#editVenueForm${venueId} input[name="image_id"]`);
     
-    if (currentImage) {
-        currentImage.value = 'delete';
+    // Set remove_image to 1
+    if (removeImageInput) {
+        removeImageInput.value = '1';
     }
     
-    resetImagePreview(preview);
+    // Set image_id
+    if (imageIdInput) {
+        imageIdInput.value = imageId;
+    }
+    
+    // Clear the file input and reset preview
     input.value = '';
+    resetImagePreview(preview);
+    
+    // Log the form data for debugging
+    const form = document.getElementById(`editVenueForm${venueId}`);
+    const formData = new FormData(form);
+    console.log('Form data after removal:', {
+        remove_image: formData.get('remove_image'),
+        image_id: formData.get('image_id')
+    });
 }
 
 // Add drag and drop support
@@ -809,7 +649,11 @@ function setupDragAndDrop(preview, input) {
         }
     });
     
-    preview.addEventListener('click', () => {
+    preview.addEventListener('click', (e) => {
+        // Don't open file picker if clicking the remove button
+        if (e.target.closest('.remove-image')) {
+            return;
+        }
         if (!preview.classList.contains('has-image')) {
             input.click();
         }
@@ -845,8 +689,6 @@ function resetForm() {
 document.getElementById('addVenueModal').addEventListener('shown.bs.modal', function () {
     if (!map) {
         initMap();
-    } else {
-        map.invalidateSize();
     }
 });
 
@@ -854,7 +696,6 @@ document.getElementById('addVenueModal').addEventListener('shown.bs.modal', func
 <?php foreach ($venues as $venue): ?>
 document.getElementById('editVenueModal<?= $venue['id'] ?>').addEventListener('shown.bs.modal', function () {
     initEditMap(<?= $venue['id'] ?>, <?= $venue['lat'] ?>, <?= $venue['lon'] ?>);
-    editMaps[<?= $venue['id'] ?>].map.invalidateSize();
 });
 <?php endforeach; ?>
 
@@ -863,4 +704,4 @@ document.getElementById('addVenueModal').addEventListener('hidden.bs.modal', fun
     resetForm();
 });
 </script>
-<?= $this->endSection() ?>
+<?= $this->endSection() ?> 
