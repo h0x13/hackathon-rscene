@@ -110,7 +110,8 @@ class TalentController extends BaseController
                     venue.barangay,
                     venue.city,
                     venue.zip_code,
-                    venue.rent
+                    venue.rent,
+                    venue.id
                 ')
                 ->join('venue', 'venue.id = event_performance.venue_id', 'left')
                 ->join('venue_pin', 'venue.pin_id = venue_pin.id', 'left')
@@ -169,55 +170,77 @@ class TalentController extends BaseController
         return view('pages/talents/venues', ['venues' => $venues]);
     }
 
-    public function saveEvent(){
-        $session = session();
-        $userId = $session->get('user_data')['user_id'] ?? null;
-        if ($this->request->getMethod() === 'POST') {
-            
-            // 1. Save Event
-            $eventModel = new EventPerformance();
-            $eventData = [
-                'venue_id'           => $this->request->getPost('venue_id'),
-                'organizer_id'        => $userId,
-                'event_name'          => $this->request->getPost('event_name'),
-                'event_description'   => $this->request->getPost('description'),
-                'event_startdate'     => $this->request->getPost('start_date'),
-                'event_enddate'       => $this->request->getPost('end_date'),
-                'event_status'        => 'Scheduled',
-                'booking_status'      => 'Pending',
-            ];
-            
-            log_message('debug', 'Event description length before insert: ' . strlen($eventData['event_description']));
-            $eventInsert = $eventModel->insert($eventData);
-            log_message('debug', 'Event insert result: ' . var_export($eventInsert, true));
-            if (!$eventInsert) {
-                $errors = $eventModel->errors();
-                if (!empty($errors)) {
-                    $session->setFlashdata('error', 'Failed to insert event: ' . implode(', ', $errors));
-                } else {
-                    $session->setFlashdata('error', 'Failed to insert event due to an unknown error.');
-                }
-                log_message('error', 'Event insertion failed: ' . var_export($errors, true));
-                return redirect()->back();
-            }
-            $event_id = $eventModel->getInsertID();
+    public function saveEvent()
+{
+    $session = session();
+    $userId = $session->get('user_data')['user_id'] ?? null;
 
-            $booking = new BookingModel();
-            $bookingData = [
-                'booking_event' => $event_id,
-                'artist' => $userId,
-                'booking_status' => 'Pending',
-            ];
+    if ($this->request->getMethod() === 'POST') {
+        // Load models
+        $eventModel = new EventPerformance();
+        $bookingModel = new BookingModel();
 
-            $bookingInsert = $booking->insert($bookingData);
-            $bookingId = $booking->getInsertID();
+        // Get database connection
+        $db = \Config\Database::connect();
+        $db->transStart(); // Start Transaction
 
-            $session->setFlashdata('success', 'Event created successfully!');
-            return redirect()->to('/talents/events');
+        // Prepare event data
+        $eventData = [
+            'venue_id'           => $this->request->getPost('venue_id'),
+            'organizer_id'       => $userId,
+            'event_name'         => $this->request->getPost('event_name'),
+            'event_description'  => $this->request->getPost('description'),
+            'event_startdate'    => $this->request->getPost('start_date'),
+            'event_enddate'      => $this->request->getPost('end_date'),
+            'event_status'       => 'Scheduled',
+            'booking_status'     => 'Pending',
+        ];
+
+        // Insert event
+        $eventInsert = $eventModel->insert($eventData);
+        if (!$eventInsert) {
+            $db->transRollback(); // Rollback on failure
+            $errors = $eventModel->errors();
+            log_message('error', 'Event insertion failed: ' . var_export($errors, true));
+            $session->setFlashdata('error', 'Failed to insert event: ' . implode(', ', $errors));
+            return redirect()->back();
         }
 
-        $session->setFlashdata('error', 'Failed to create event. Please try again.');
-        return redirect()->back()->with('error', 'Invalid request.');
+        $event_id = $eventModel->getInsertID();
+
+        // Prepare booking data
+        $bookingData = [
+            'booking_event'   => $event_id,
+            'artist'          => $userId,
+            'booking_status'  => 'Pending',
+        ];
+
+        // Insert booking
+        $bookingInsert = $bookingModel->insert($bookingData);
+        if (!$bookingInsert) {
+            $db->transRollback(); // Rollback on failure
+            $errors = $bookingModel->errors();
+            log_message('error', 'Booking insertion failed: ' . var_export($errors, true));
+            $session->setFlashdata('error', 'Failed to insert booking: ' . implode(', ', $errors));
+            return redirect()->back();
+        }
+
+        // Commit transaction if everything is successful
+        $db->transComplete();
+
+        if ($db->transStatus() === false) {
+            // Something went wrong even after trying to complete
+            $session->setFlashdata('error', 'Transaction failed. Please try again.');
+            return redirect()->back();
+        }
+
+        $session->setFlashdata('success', 'Event created successfully!');
+        return redirect()->to('/talents/events');
+    }
+
+    // Invalid method
+    $session->setFlashdata('error', 'Failed to create event. Please try again.');
+    return redirect()->back()->with('error', 'Invalid request.');
     }
 
     public function allEvents()

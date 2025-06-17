@@ -9,7 +9,6 @@ VenueConnect - Home
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         body {
-            background: linear-gradient(135deg, #6e8efb, #a777e3);
             font-family: 'Poppins', sans-serif;
             color: #2c3e50;
             min-height: 100vh;
@@ -292,14 +291,7 @@ VenueConnect - Home
             border-radius: 10px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
         }
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
+
     </style>
 <?= $this->endSection() ?>
 
@@ -307,13 +299,13 @@ VenueConnect - Home
 <div class="container py-5">
     <div class="header-section">
         <h1>🎉 Your Local Events</h1>
-        <p class="text-white">Find and track concerts happening near you. Explore, attend, and enjoy the local music scene!</p>
+        <p class="">Find and track concerts happening near you. Explore, attend, and enjoy the local music scene!</p>
     </div>
 
     <div class="row g-4 mb-5">
-        <div class="d-flex align-items-center justify-content-between mb-4">
+        <div class="d-flex align-items-center justify-content-between mb-4 pe-5">
             <h4 class="section-title"><i class="bi bi-calendar-week me-2"></i>Your Events</h4>
-            <a href="<?= site_url('/talents/talentsEvents') ?>" class="btn btn-primary">
+            <a href="<?= site_url('/talents/talentsEvents') ?>" class="btn btn-primary me-5">
                 View All <i class="bi bi-arrow-right ms-1"></i>
             </a>
         </div>
@@ -332,7 +324,7 @@ VenueConnect - Home
                             <p class="card-text">
                                 <small class="text-muted">
                                     <i class="bi bi-calendar-event me-1"></i>
-                                    <?= date('F j, Y', strtotime($event['event_date'])) ?>
+                                    <?= date('F j, Y', strtotime($event['event_startdate'])) ?>
                                 </small>
                             </p>
                             <button
@@ -360,7 +352,7 @@ VenueConnect - Home
                                     </div>
                                     <div class="col-md-6">
                                         <h6 class="fw-bold mb-3">Event Details</h6>
-                                        <p><strong>Date:</strong> <?= date('F j, Y', strtotime($event['event_date'])) ?></p>
+                                        <p><strong>Date:</strong> <?= date('F j, Y', strtotime($event['event_startdate'])) ?></p>
                                         <p><strong>Location:</strong> <?= esc($event['city']) ?>, <?= esc($event['province'] ?? '') ?></p>
                                         <p><strong>Description:</strong> <?= esc($event['event_description']) ?></p>
                                     </div>
@@ -439,12 +431,8 @@ VenueConnect - Home
                         <input type="text" class="form-control" id="barangay" name="barangay" readonly>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">City</label>
+                        <label class="form-label">City/Province</label>
                         <input type="text" class="form-control" id="city" name="city" readonly>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Province</label>
-                        <input type="text" class="form-control" id="province" name="province" readonly>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">ZIP Code</label>
@@ -452,6 +440,7 @@ VenueConnect - Home
                     </div>
                     <input type="hidden" name="lat" id="lat" readonly>
                     <input type="hidden" name="lang" id="lang" readonly>
+                    <input type="hidden" name="venue_id" id="venue_id" readonly>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -522,7 +511,7 @@ VenueConnect - Home
         venues.forEach(venue => {
             const marker = L.marker([venue.lat, venue.lng]).addTo(map);
             marker.bindPopup(
-                `<strong><span class="text-info fs-6">₱${venue.rent}</span> - ${venue.name}</strong><br>${venue.city}, ${venue.province}<br>${venue.description}<br>
+                `<strong><span class="text-info fs-6">₱${venue.rent}</span> - ${venue.venue_name}</strong><br>${venue.barangay}, ${venue.city} <br>${venue.venue_description}<br>
                 <button class="btn btn-primary btn-sm mt-2" data-bs-toggle="modal" data-bs-target="#addEventModal" data-venue="${encodeURIComponent(JSON.stringify(venue))}"
                 onclick="bookVenue(JSON.parse(decodeURIComponent(this.dataset.venue)))">Book this venue</button>`
             );
@@ -530,13 +519,13 @@ VenueConnect - Home
     });
 
     function bookVenue(venue) {
-        document.getElementById('addEventModalLabel').innerText = 'Book Venue - ' + venue.name;
+        document.getElementById('addEventModalLabel').innerText = 'Book Venue - ' + venue.venue_name;
         document.querySelector('#street_address').value = venue.street || '';
         document.querySelector('#barangay').value = venue.barangay || '';
         document.querySelector('#city').value = venue.city || '';
-        document.querySelector('#province').value = venue.province || '';
         document.querySelector('#lang').value = venue.lng || '';
         document.querySelector('#lat').value = venue.lat || '';
+        document.querySelector('#venue_id').value = venue.id || '';
         document.querySelector('[name="zip_code"]').value = venue.zip_code || '';
     }
 

@@ -8,11 +8,9 @@ VenueConnect - Home
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
-            background: linear-gradient(135deg, #6e8efb, #a777e3);
             font-family: 'Poppins', sans-serif;
             color: #2c3e50;
             min-height: 100vh;
-            position: relative;
             overflow-x: hidden;
         }
         body::before {
@@ -26,7 +24,7 @@ VenueConnect - Home
             z-index: -1;
         }
         .container {
-            position: relative;
+            /* position: relative; */
             z-index: 1;
         }
         .header-section {
@@ -78,7 +76,6 @@ VenueConnect - Home
             transition: all 0.4s ease;
             background: #ffffff; /* White background for cards */
             overflow: hidden;
-            animation: fadeInUp 0.8s ease-in-out;
         }
         .event-card:hover {
             transform: translateY(-8px);
@@ -212,13 +209,13 @@ VenueConnect - Home
 <div class="container py-5">
     <div class="header-section">
         <h1>🎉 Your Local Events</h1>
-        <p class="text-white">Find and track concerts happening near you. Explore, attend, and enjoy the local music scene!</p>
+        <p class="">Find and track concerts happening near you. Explore, attend, and enjoy the local music scene!</p>
     </div>
 
     <div class="row g-4 mb-5">
-        <div class="d-flex align-items-center justify-content-between mb-4">
+        <div class="d-flex align-items-center justify-content-between mb-4 pe-5">
             <h4 class="section-title"><i class="bi bi-calendar me-2"></i>Your Upcoming Events</h4>
-            <a href="<?= site_url('/talents/events') ?>" role="button" class="btn btn-secondary">
+            <a href="<?= site_url('/talents/events') ?>" role="button" class="btn btn-secondary me-5">
                 <i class="bi bi-arrow-left me-1"></i>Back
             </a>
         </div>
@@ -237,7 +234,7 @@ VenueConnect - Home
                             <p class="card-text">
                                 <small class="text-muted">
                                     <i class="bi bi-calendar-event me-1"></i>
-                                    <?= date('F j, Y', strtotime($event['event_date'])) ?>
+                                    <?= date('F j, Y', strtotime($event['event_startdate'])) ?>
                                 </small>
                             </p>
                             <button
@@ -265,7 +262,7 @@ VenueConnect - Home
                                     </div>
                                     <div class="col-md-6">
                                         <h6 class="fw-bold mb-3">Event Details</h6>
-                                        <p><strong>Date:</strong> <?= date('F j, Y', strtotime($event['event_date'])) ?></p>
+                                        <p><strong>Date:</strong> <?= date('F j, Y', strtotime($event['event_startdate'])) ?></p>
                                         <p><strong>Location:</strong> <?= esc($event['city']) ?>, <?= esc($event['country'] ?? '') ?></p>
                                         <p><strong>Description:</strong> <?= esc($event['event_description'] ?? 'No description available.') ?></p>
                                     </div>

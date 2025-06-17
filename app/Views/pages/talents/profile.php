@@ -250,7 +250,7 @@
                 </div>
                 <div class="col-md-6 mb-3">
                     <label for="mod" class="form-label">Mode of Payments</label>
-                    <input type="text" class="form-control" id="mod" name="mod" value="<?= $user_credential['user_profile']['mode_of_payments'] ?? '' ?>">
+                    <input type="text" class="form-control" id="mod" name="mod" value="<?= $user_credential['artist']['mode_of_payments'] ?? '' ?>">
                 </div>
             </div>
         </div>
