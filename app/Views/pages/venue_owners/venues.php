@@ -5,176 +5,6 @@ VenueConnect - My Venues
 <?= $this->endSection() ?>
 
 <?= $this->section('local_css') ?>
-<<<<<<< HEAD
-<style>
-    #map {
-        height: 300px;
-        width: 100%;
-        border-radius: 4px;
-        border: 1px solid #dee2e6;
-    }
-    .leaflet-container {
-        z-index: 1;
-    }
-    .loading {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        z-index: 2;
-        background: rgba(255, 255, 255, 0.8);
-        padding: 10px;
-        border-radius: 4px;
-        display: none;
-    }
-    .venue-image {
-        width: 100%;
-        height: 200px;
-        object-fit: cover;
-        border-radius: 4px;
-        margin-bottom: 1rem;
-    }
-    .image-preview {
-        position: relative;
-        margin-bottom: 1rem;
-        border: 2px dashed #dee2e6;
-        border-radius: 4px;
-        padding: 1rem;
-        text-align: center;
-        min-height: 200px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background-color: #f8f9fa;
-        transition: all 0.3s ease;
-        cursor: pointer;
-    }
-    
-    .image-preview:hover {
-        border-color: #0d6efd;
-        background-color: #f1f3f5;
-    }
-    
-    .image-preview.dragover {
-        border-color: #0d6efd;
-        background-color: #e9ecef;
-    }
-    
-    .image-preview img {
-        max-width: 100%;
-        max-height: 200px;
-        object-fit: contain;
-        border-radius: 4px;
-    }
-    
-    .image-preview .remove-image {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        background: rgba(255, 255, 255, 0.9);
-        border: none;
-        border-radius: 50%;
-        width: 30px;
-        height: 30px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        z-index: 2;
-        transition: all 0.2s ease;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    
-    .image-preview .remove-image:hover {
-        background: #fff;
-        transform: scale(1.1);
-        box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-    }
-    
-    .image-preview .upload-placeholder {
-        color: #6c757d;
-        font-size: 0.9rem;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 0.5rem;
-    }
-    
-    .image-preview .upload-placeholder i {
-        font-size: 2.5rem;
-        color: #adb5bd;
-        transition: all 0.3s ease;
-    }
-    
-    .image-preview:hover .upload-placeholder i {
-        color: #0d6efd;
-        transform: scale(1.1);
-    }
-    
-    .image-preview .upload-placeholder p {
-        margin: 0;
-    }
-    
-    .image-preview .upload-placeholder small {
-        color: #adb5bd;
-        font-size: 0.8rem;
-    }
-    
-    .image-preview.has-image {
-        border-style: solid;
-        padding: 0;
-        cursor: default;
-    }
-    
-    .image-preview.has-image:hover {
-        border-color: #dee2e6;
-        background-color: #f8f9fa;
-    }
-    
-    .image-preview.has-image .upload-placeholder {
-        display: none;
-    }
-    
-    .image-preview .progress {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 4px;
-        background: #e9ecef;
-        display: none;
-    }
-    
-    .image-preview .progress-bar {
-        background-color: #0d6efd;
-        transition: width 0.3s ease;
-    }
-    
-    .image-preview.uploading .progress {
-        display: block;
-    }
-    
-    .image-preview.uploading .upload-placeholder,
-    .image-preview.uploading img {
-        opacity: 0.5;
-    }
-    
-    .image-preview .error-message {
-        color: #dc3545;
-        font-size: 0.8rem;
-        margin-top: 0.5rem;
-        display: none;
-    }
-    
-    .image-preview.has-error .error-message {
-        display: block;
-    }
-    
-    .image-preview.has-error {
-        border-color: #dc3545;
-    }
-</style>
-=======
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
@@ -415,8 +245,153 @@ VenueConnect - My Venues
             from { opacity: 0; }
             to { opacity: 1; }
         }
+        .venue-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+        }
+        .image-preview {
+            position: relative;
+            margin-bottom: 1rem;
+            border: 2px dashed #dee2e6;
+            border-radius: 4px;
+            padding: 1rem;
+            text-align: center;
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f8f9fa;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .image-preview:hover {
+            border-color: #0d6efd;
+            background-color: #f1f3f5;
+        }
+        
+        .image-preview.dragover {
+            border-color: #0d6efd;
+            background-color: #e9ecef;
+        }
+        
+        .image-preview img {
+            max-width: 100%;
+            max-height: 200px;
+            object-fit: contain;
+            border-radius: 4px;
+        }
+        
+        .image-preview .remove-image {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 2;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .image-preview .remove-image:hover {
+            background: #fff;
+            transform: scale(1.1);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
+        
+        .image-preview .upload-placeholder {
+            color: #6c757d;
+            font-size: 0.9rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .image-preview .upload-placeholder i {
+            font-size: 2.5rem;
+            color: #adb5bd;
+            transition: all 0.3s ease;
+        }
+        
+        .image-preview:hover .upload-placeholder i {
+            color: #0d6efd;
+            transform: scale(1.1);
+        }
+        
+        .image-preview .upload-placeholder p {
+            margin: 0;
+        }
+        
+        .image-preview .upload-placeholder small {
+            color: #adb5bd;
+            font-size: 0.8rem;
+        }
+        
+        .image-preview.has-image {
+            border-style: solid;
+            padding: 0;
+            cursor: default;
+        }
+        
+        .image-preview.has-image:hover {
+            border-color: #dee2e6;
+            background-color: #f8f9fa;
+        }
+        
+        .image-preview.has-image .upload-placeholder {
+            display: none;
+        }
+        
+        .image-preview .progress {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: #e9ecef;
+            display: none;
+        }
+        
+        .image-preview .progress-bar {
+            background-color: #0d6efd;
+            transition: width 0.3s ease;
+        }
+        
+        .image-preview.uploading .progress {
+            display: block;
+        }
+        
+        .image-preview.uploading .upload-placeholder,
+        .image-preview.uploading img {
+            opacity: 0.5;
+        }
+        
+        .image-preview .error-message {
+            color: #dc3545;
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+            display: none;
+        }
+        
+        .image-preview.has-error .error-message {
+            display: block;
+        }
+        
+        .image-preview.has-error {
+            border-color: #dc3545;
+        }
     </style>
->>>>>>> 66e87a9cf7be376004d68a7f879b652e047a8b6b
 <?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
@@ -465,16 +440,9 @@ VenueConnect - My Venues
                                         </small>
                                     </p>
                                     <div class="btn-group">
-<<<<<<< HEAD
                                         <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editVenueModal<?= $venue['id'] ?>">
-                                            <i class="bi bi-pencil"></i> Edit
-                                        </button>
-=======
-                                        <!-- Uncomment if Edit functionality is needed -->
-                                        <!-- <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editVenueModal<?= $venue['id'] ?>">
                                             <i class="bi bi-pencil me-1"></i>Edit
-                                        </button> -->
->>>>>>> 66e87a9cf7be376004d68a7f879b652e047a8b6b
+                                        </button>
                                         <a href="<?= base_url('venue/delete/' . $venue['id']) ?>" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this venue?')">
                                             <i class="bi bi-trash me-1"></i>Delete
                                         </a>
