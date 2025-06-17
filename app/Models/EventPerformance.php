@@ -12,7 +12,16 @@ class EventPerformance extends Model
     protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
-    protected $allowedFields    = [];
+    protected $allowedFields    = [
+        'venue_id',
+        'organizer_id',
+        'event_name',
+        'event_description',
+        'event_startdate',
+        'event_enddate',
+        'event_status',
+        'booking_status',
+    ];
 
     protected bool $allowEmptyInserts = false;
     protected bool $updateOnlyChanged = true;

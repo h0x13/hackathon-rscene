@@ -12,7 +12,13 @@ class ArtistModel extends Model
     protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
-    protected $allowedFields    = [];
+    protected $allowedFields    = [
+        'performer',
+        'artist_name',
+        'price_range',
+        'payment_option',
+        'hours'
+    ];
 
     protected bool $allowEmptyInserts = false;
     protected bool $updateOnlyChanged = true;
