@@ -274,7 +274,7 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         `;
         alertContainer.appendChild(alertDiv);
-        
+
         // Auto dismiss after 5 seconds
         setTimeout(() => {
             alertDiv.remove();
@@ -283,7 +283,7 @@
 
     async function handleSubmit(event) {
         event.preventDefault();
-        
+
         const form = event.target;
         // const formData = new FormData(form);
         
@@ -297,7 +297,7 @@
             base_rate: form.get('base_rate'),
             mode_of_payments: form.get('mod'),
         };
-        
+
         try {
             const response = await axios.post('<?= site_url('talents/profile/update') ?>', data, {
                 headers: {
@@ -305,7 +305,7 @@
                     'Content-Type': 'application/json'
                 }
             });
-            
+
             if (response.data.success) {
                 showAlert(response.data.message, 'success');
             } else {

@@ -37,7 +37,7 @@ class VenueModel extends Model
 
     // Validation
     protected $validationRules = [
-        'venuename'     => 'required|min_length[3]|max_length[255]',
+        'venue_name'     => 'required|min_length[3]|max_length[255]',
         'pin_id'        => 'required|integer',
         'owner_profile' => 'required|integer',
         'venue_description'   => 'required|min_length[3]',
@@ -47,7 +47,6 @@ class VenueModel extends Model
         'zip_code'      => 'required|min_length[2]|max_length[20]',
         'rent'          => 'required|decimal',
         'capacity'      => 'required|integer'
-        
     ];
 
     protected $validationMessages = [
@@ -92,7 +91,6 @@ class VenueModel extends Model
             'required' => 'Capacity is required',
             'integer' => 'Capacity must be a valid number'
         ]
-
     ];
 
     protected $skipValidation       = false;

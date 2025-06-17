@@ -250,7 +250,11 @@
                     showAlert(response.data.message, 'success');
                     // Redirect to profile page after 1 second
                     setTimeout(() => {
-                        window.location.href = "<?= site_url('/talents') ?>";
+                        if (response.data.user.user_type === 'venue_owner') {
+                            window.location.href = "<?= site_url('/dashboard') ?>";
+                        } else {
+                            window.location.href = "<?= site_url('/talents') ?>";
+                        }
                     }, 1000);
                 } else {
                     showAlert(response.data.message || 'Invalid Email or Password', 'danger');

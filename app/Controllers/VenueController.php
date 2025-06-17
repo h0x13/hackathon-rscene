@@ -2,9 +2,9 @@
 
 namespace App\Controllers;
 
-use App\Models\EventPlannerLocation;
-use App\Models\EventPlannerAddress;
-use App\Models\EventPlannerEvent;
+use App\Models\VenueModel;
+use App\Models\VenuePin;
+use App\Models\ImageModel;
 use CodeIgniter\RESTful\ResourceController;
 use CodeIgniter\API\ResponseTrait;
 
@@ -12,17 +12,18 @@ class VenueController extends ResourceController
 {
     use ResponseTrait;
 
-    protected $locationModel;
-    protected $addressModel;
-    protected $eventModel;
+    protected $venueModel;
+    protected $venuePinModel;
+    protected $imageModel;
     protected $session;
 
     public function __construct()
     {
-        $this->locationModel = new EventPlannerLocation();
-        $this->addressModel = new EventPlannerAddress();
-        $this->eventModel = new EventPlannerEvent();
+        $this->venueModel = new VenueModel();
+        $this->venuePinModel = new VenuePin();
+        $this->imageModel = new ImageModel();
         $this->session = \Config\Services::session();
+        helper('image');
     }
 
     public function dashboard()
@@ -42,19 +43,10 @@ class VenueController extends ResourceController
 
         $user_id = $this->session->get('user_data')['user_id'];
         
-        $venues = $this->locationModel->select('
-                event_planner_location.id,
-                event_planner_location.lat,
-                event_planner_location.long,
-                event_planner_address.name,
-                event_planner_address.description,
-                event_planner_address.street_address,
-                event_planner_address.barangay,
-                event_planner_address.city,
-                event_planner_address.country,
-                event_planner_address.zip_code
-            ')
-            ->join('event_planner_address', 'event_planner_address.event_id = event_planner_location.id')
+        $venues = $this->venueModel->select('venue.*, venue_pin.lat, venue_pin.lon, venue_image.image_path')
+            ->join('venue_pin', 'venue_pin.id = venue.pin_id')
+            ->join('venue_image', 'venue_image.venue_id = venue.id', 'left')
+            ->where('venue.owner_profile', $user_id)
             ->findAll();
 
         if ($this->request->isAJAX()) {
@@ -62,6 +54,64 @@ class VenueController extends ResourceController
         }
 
         return view('pages/venue_owners/venues', ['venues' => $venues]);
+    }
+
+    protected function handleImageUpload($venue_id, $existing_image_id = null)
+    {
+        $image = $this->request->getFile('venue_image');
+        
+        // If no new image uploaded, return existing image_id
+        if (!$image || !$image->isValid() || $image->hasMoved()) {
+            return $existing_image_id;
+        }
+
+        // Validate image
+        $validationRule = [
+            'venue_image' => [
+                'label' => 'Venue Image',
+                'rules' => [
+                    'uploaded[venue_image]',
+                    'is_image[venue_image]',
+                    'mime_in[venue_image,image/jpg,image/jpeg,image/png,image/webp]',
+                    'max_size[venue_image,2048]', // 2MB max
+                ],
+            ],
+        ];
+
+        if (!$this->validate($validationRule)) {
+            throw new \Exception(implode(', ', $this->validator->getErrors()));
+        }
+
+        // Delete old image if exists
+        if ($existing_image_id) {
+            $old_image = $this->imageModel->find($existing_image_id);
+            if ($old_image) {
+                delete_image($old_image['image_path']);
+                $this->imageModel->delete($existing_image_id);
+            }
+        }
+
+        // Save new image
+        $image_path = save_image($image->getFileInfo());
+        if (!$image_path) {
+            throw new \Exception('Failed to save image file');
+        }
+
+        // Create image record
+        $image_data = [
+            'name' => $image->getClientName(),
+            'image_path' => $image_path,
+            'venue_id' => $venue_id
+        ];
+
+        $image_id = $this->imageModel->insert($image_data);
+        if (!$image_id) {
+            // Clean up the uploaded file if database insert fails
+            delete_image($image_path);
+            throw new \Exception('Failed to create image record');
+        }
+
+        return $image_id;
     }
 
     public function add()
@@ -76,7 +126,7 @@ class VenueController extends ResourceController
         $data = $this->request->getPost();
 
         // Validate required fields
-        $required_fields = ['name', 'description', 'lat', 'long', 'street_address', 'barangay', 'city', 'country', 'zip_code'];
+        $required_fields = ['venue_name', 'venue_description', 'street', 'barangay', 'city', 'zip_code', 'rent', 'capacity', 'lat', 'lon'];
         foreach ($required_fields as $field) {
             if (empty($data[$field])) {
                 return redirect()->back()->with('error', "Field {$field} is required");
@@ -84,90 +134,65 @@ class VenueController extends ResourceController
         }
 
         // Start transaction
-        $this->locationModel->db->transStart();
+        $this->venueModel->db->transStart();
 
         try {
-            // Add location
-            $location_data = [
+            // Add Venue Pin
+            $venue_pin_data = [
                 'lat' => (float)$data['lat'],
-                'long' => (float)$data['long']
+                'lon' => (float)$data['lon']
             ];
-            $location_id = $this->locationModel->insert($location_data);
+            $pin_id = $this->venuePinModel->insert($venue_pin_data);
             
-            if (!$location_id) {
+            if (!$pin_id) {
                 throw new \Exception('Failed to add venue location');
             }
 
-            // Add address
-            $address_data = [
-                'event_id' => $location_id,
-                'name' => trim($data['name']),
-                'description' => trim($data['description']),
-                'street_address' => trim($data['street_address']),
+            // Add Venue
+            $venue_data = [
+                'pin_id' => $pin_id,
+                'owner_profile' => $user_id,
+                'venue_name' => trim($data['venue_name']),
+                'venue_description' => trim($data['venue_description']),
+                'street' => trim($data['street']),
                 'barangay' => trim($data['barangay']),
                 'city' => trim($data['city']),
-                'country' => trim($data['country']),
-                'zip_code' => trim($data['zip_code'])
+                'rent' => trim($data['rent']),
+                'zip_code' => trim($data['zip_code']),
+                'capacity' => trim($data['capacity'])
             ];
 
-            // Validate address data
-            if (!$this->addressModel->validate($address_data)) {
-                throw new \Exception(implode(', ', $this->addressModel->errors()));
+            // Validate venue data
+            if (!$this->venueModel->validate($venue_data)) {
+                throw new \Exception(implode(', ', $this->venueModel->errors()));
             }
 
-            $address_id = $this->addressModel->insert($address_data);
+            $venue_id = $this->venueModel->insert($venue_data);
             
-            if (!$address_id) {
-                throw new \Exception('Failed to add venue address');
+            if (!$venue_id) {
+                throw new \Exception('Failed to add venue');
             }
 
-            $this->locationModel->db->transComplete();
+            // Handle image upload
+            try {
+                $this->handleImageUpload($venue_id);
+            } catch (\Exception $e) {
+                log_message('error', 'Image upload error: ' . $e->getMessage());
+                // Continue with venue creation even if image upload fails
+            }
 
-            if ($this->locationModel->db->transStatus() === false) {
+            $this->venueModel->db->transComplete();
+
+            if ($this->venueModel->db->transStatus() === false) {
                 return redirect()->back()->with('error', 'Failed to add venue');
             }
 
             return redirect()->to('venue/list')->with('success', 'Venue added successfully');
         } catch (\Exception $e) {
-            $this->locationModel->db->transRollback();
+            $this->venueModel->db->transRollback();
             log_message('error', 'Venue add error: ' . $e->getMessage());
             return redirect()->back()->with('error', $e->getMessage());
         }
-    }
-
-    public function view($id)
-    {
-        if (!$this->session->get('user_data')) {
-            return $this->fail('Unauthorized', 401);
-        }
-
-        $user_id = $this->session->get('user_data')['user_id'];
-        
-        $venue = $this->eventModel->select('
-                event_planner_event.id,
-                event_planner_event.event_name as name,
-                event_planner_event.event_description as description,
-                event_planner_event.status,
-                event_planner_location.lat,
-                event_planner_location.long,
-                event_planner_address.name as venue_name,
-                event_planner_address.street_address,
-                event_planner_address.barangay,
-                event_planner_address.city,
-                event_planner_address.country,
-                event_planner_address.zip_code
-            ')
-            ->join('event_planner_location', 'event_planner_location.id = event_planner_event.location_id')
-            ->join('event_planner_address', 'event_planner_address.event_id = event_planner_event.id')
-            ->where('event_planner_event.id', $id)
-            ->where('event_planner_event.event_organizer_id', $user_id)
-            ->first();
-
-        if (!$venue) {
-            return $this->fail('Venue not found');
-        }
-
-        return $this->respond(['venue' => $venue]);
     }
 
     public function edit($id = null)
@@ -184,7 +209,7 @@ class VenueController extends ResourceController
         $data = $this->request->getPost();
 
         // Validate required fields
-        $required_fields = ['name', 'description', 'lat', 'long', 'street_address', 'barangay', 'city', 'country', 'zip_code'];
+        $required_fields = ['venue_name', 'venue_description', 'street', 'barangay', 'city', 'zip_code', 'rent', 'capacity', 'lat', 'lon'];
         foreach ($required_fields as $field) {
             if (empty($data[$field])) {
                 return redirect()->back()->with('error', "Field {$field} is required");
@@ -192,51 +217,75 @@ class VenueController extends ResourceController
         }
 
         // Get venue details
-        $venue = $this->locationModel->find($id);
+        $venue = $this->venueModel->select('venue.*, venue_pin.lat, venue_pin.lon, venue_image.image_path, venue_image.id as image_id')
+            ->join('venue_pin', 'venue_pin.id = venue.pin_id')
+            ->join('venue_image', 'venue_image.venue_id = venue.id', 'left')
+            ->where('venue.id', $id)
+            ->where('venue.owner_profile', $user_id)
+            ->first();
 
         if (!$venue) {
             return redirect()->back()->with('error', 'Venue not found');
         }
 
         // Start transaction
-        $this->locationModel->db->transStart();
+        $this->venueModel->db->transStart();
 
         try {
-            // Update location
-            $location_data = [
-                'lat' => (float)$data['lat'],
-                'long' => (float)$data['long']
-            ];
-            $this->locationModel->update($id, $location_data);
-
-            // Update address
-            $address_data = [
-                'name' => trim($data['name']),
-                'description' => trim($data['description']),
-                'street_address' => trim($data['street_address']),
-                'barangay' => trim($data['barangay']),
-                'city' => trim($data['city']),
-                'country' => trim($data['country']),
-                'zip_code' => trim($data['zip_code'])
-            ];
-
-            // Validate address data
-            if (!$this->addressModel->validate($address_data)) {
-                throw new \Exception(implode(', ', $this->addressModel->errors()));
+            // Handle image upload/update
+            if (isset($data['current_image']) && $data['current_image'] === 'delete') {
+                // Delete image if requested
+                if ($venue['image_id']) {
+                    $old_image = $this->imageModel->find($venue['image_id']);
+                    if ($old_image) {
+                        delete_image($old_image['image_path']);
+                        $this->imageModel->delete($venue['image_id']);
+                    }
+                }
+            } else {
+                try {
+                    $this->handleImageUpload($id, $venue['image_id']);
+                } catch (\Exception $e) {
+                    log_message('error', 'Image upload error: ' . $e->getMessage());
+                    // Continue with venue update even if image upload fails
+                }
             }
 
-            // Update address using location_id instead of event_id
-            $this->addressModel->where('event_id', $id)->set($address_data)->update();
+            // Update venue pin
+            $venue_pin_data = [
+                'lat' => (float)$data['lat'],
+                'lon' => (float)$data['lon']
+            ];
+            $this->venuePinModel->update($venue['pin_id'], $venue_pin_data);
 
-            $this->locationModel->db->transComplete();
+            // Update venue
+            $venue_data = [
+                'venue_name' => trim($data['venue_name']),
+                'venue_description' => trim($data['venue_description']),
+                'street' => trim($data['street']),
+                'barangay' => trim($data['barangay']),
+                'city' => trim($data['city']),
+                'rent' => trim($data['rent']),
+                'zip_code' => trim($data['zip_code']),
+                'capacity' => trim($data['capacity'])
+            ];
 
-            if ($this->locationModel->db->transStatus() === false) {
+            // Validate venue data
+            if (!$this->venueModel->validate($venue_data)) {
+                throw new \Exception(implode(', ', $this->venueModel->errors()));
+            }
+
+            $this->venueModel->update($id, $venue_data);
+
+            $this->venueModel->db->transComplete();
+
+            if ($this->venueModel->db->transStatus() === false) {
                 return redirect()->back()->with('error', 'Failed to update venue');
             }
 
             return redirect()->to('venue/list')->with('success', 'Venue updated successfully');
         } catch (\Exception $e) {
-            $this->locationModel->db->transRollback();
+            $this->venueModel->db->transRollback();
             log_message('error', 'Venue update error: ' . $e->getMessage());
             return redirect()->back()->with('error', $e->getMessage());
         }
@@ -253,27 +302,42 @@ class VenueController extends ResourceController
         }
 
         $user_id = $this->session->get('user_data')['user_id'];
-        $venue = $this->locationModel->find($id);
+        
+        // Get venue details to check ownership
+        $venue = $this->venueModel->select('venue.*, venue_image.image_path, venue_image.id as image_id')
+            ->join('venue_image', 'venue_image.venue_id = venue.id', 'left')
+            ->where('venue.id', $id)
+            ->where('venue.owner_profile', $user_id)
+            ->first();
 
         if (!$venue) {
             return redirect()->back()->with('error', 'Venue not found');
         }
 
-        $this->locationModel->db->transStart();
+        $this->venueModel->db->transStart();
 
         try {
-            $this->addressModel->where('event_id', $id)->delete();
-            $this->locationModel->delete($id);
+            // Delete image if exists
+            if ($venue['image_id']) {
+                $image = $this->imageModel->find($venue['image_id']);
+                if ($image) {
+                    delete_image($image['image_path']);
+                    $this->imageModel->delete($venue['image_id']);
+                }
+            }
 
-            $this->locationModel->db->transComplete();
+            // Delete venue (this will cascade delete the venue_pin due to foreign key)
+            $this->venueModel->delete($id);
 
-            if ($this->locationModel->db->transStatus() === false) {
+            $this->venueModel->db->transComplete();
+
+            if ($this->venueModel->db->transStatus() === false) {
                 return redirect()->back()->with('error', 'Failed to delete venue');
             }
 
             return redirect()->to('venue/list')->with('success', 'Venue deleted successfully');
         } catch (\Exception $e) {
-            $this->locationModel->db->transRollback();
+            $this->venueModel->db->transRollback();
             return redirect()->back()->with('error', $e->getMessage());
         }
     }
