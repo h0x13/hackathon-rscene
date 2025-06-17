@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Models\VenueModel;
 use App\Models\VenuePin;
+use App\Models\ImageModel;
 use CodeIgniter\RESTful\ResourceController;
 use CodeIgniter\API\ResponseTrait;
 
@@ -13,13 +14,16 @@ class VenueController extends ResourceController
 
     protected $venueModel;
     protected $venuePinModel;
+    protected $imageModel;
     protected $session;
 
     public function __construct()
     {
         $this->venueModel = new VenueModel();
         $this->venuePinModel = new VenuePin();
+        $this->imageModel = new ImageModel();
         $this->session = \Config\Services::session();
+        helper('image');
     }
 
     public function dashboard()
@@ -39,8 +43,9 @@ class VenueController extends ResourceController
 
         $user_id = $this->session->get('user_data')['user_id'];
         
-        $venues = $this->venueModel->select('venue.*, venue_pin.lat, venue_pin.lon')
+        $venues = $this->venueModel->select('venue.*, venue_pin.lat, venue_pin.lon, venue_image.image_path')
             ->join('venue_pin', 'venue_pin.id = venue.pin_id')
+            ->join('venue_image', 'venue_image.venue_id = venue.id', 'left')
             ->where('venue.owner_profile', $user_id)
             ->findAll();
 
@@ -49,6 +54,64 @@ class VenueController extends ResourceController
         }
 
         return view('pages/venue_owners/venues', ['venues' => $venues]);
+    }
+
+    protected function handleImageUpload($venue_id, $existing_image_id = null)
+    {
+        $image = $this->request->getFile('venue_image');
+        
+        // If no new image uploaded, return existing image_id
+        if (!$image || !$image->isValid() || $image->hasMoved()) {
+            return $existing_image_id;
+        }
+
+        // Validate image
+        $validationRule = [
+            'venue_image' => [
+                'label' => 'Venue Image',
+                'rules' => [
+                    'uploaded[venue_image]',
+                    'is_image[venue_image]',
+                    'mime_in[venue_image,image/jpg,image/jpeg,image/png,image/webp]',
+                    'max_size[venue_image,2048]', // 2MB max
+                ],
+            ],
+        ];
+
+        if (!$this->validate($validationRule)) {
+            throw new \Exception(implode(', ', $this->validator->getErrors()));
+        }
+
+        // Delete old image if exists
+        if ($existing_image_id) {
+            $old_image = $this->imageModel->find($existing_image_id);
+            if ($old_image) {
+                delete_image($old_image['image_path']);
+                $this->imageModel->delete($existing_image_id);
+            }
+        }
+
+        // Save new image
+        $image_path = save_image($image->getFileInfo());
+        if (!$image_path) {
+            throw new \Exception('Failed to save image file');
+        }
+
+        // Create image record
+        $image_data = [
+            'name' => $image->getClientName(),
+            'image_path' => $image_path,
+            'venue_id' => $venue_id
+        ];
+
+        $image_id = $this->imageModel->insert($image_data);
+        if (!$image_id) {
+            // Clean up the uploaded file if database insert fails
+            delete_image($image_path);
+            throw new \Exception('Failed to create image record');
+        }
+
+        return $image_id;
     }
 
     public function add()
@@ -110,6 +173,14 @@ class VenueController extends ResourceController
                 throw new \Exception('Failed to add venue');
             }
 
+            // Handle image upload
+            try {
+                $this->handleImageUpload($venue_id);
+            } catch (\Exception $e) {
+                log_message('error', 'Image upload error: ' . $e->getMessage());
+                // Continue with venue creation even if image upload fails
+            }
+
             $this->venueModel->db->transComplete();
 
             if ($this->venueModel->db->transStatus() === false) {
@@ -146,8 +217,9 @@ class VenueController extends ResourceController
         }
 
         // Get venue details
-        $venue = $this->venueModel->select('venue.*, venue_pin.lat, venue_pin.lon')
+        $venue = $this->venueModel->select('venue.*, venue_pin.lat, venue_pin.lon, venue_image.image_path, venue_image.id as image_id')
             ->join('venue_pin', 'venue_pin.id = venue.pin_id')
+            ->join('venue_image', 'venue_image.venue_id = venue.id', 'left')
             ->where('venue.id', $id)
             ->where('venue.owner_profile', $user_id)
             ->first();
@@ -160,6 +232,25 @@ class VenueController extends ResourceController
         $this->venueModel->db->transStart();
 
         try {
+            // Handle image upload/update
+            if (isset($data['current_image']) && $data['current_image'] === 'delete') {
+                // Delete image if requested
+                if ($venue['image_id']) {
+                    $old_image = $this->imageModel->find($venue['image_id']);
+                    if ($old_image) {
+                        delete_image($old_image['image_path']);
+                        $this->imageModel->delete($venue['image_id']);
+                    }
+                }
+            } else {
+                try {
+                    $this->handleImageUpload($id, $venue['image_id']);
+                } catch (\Exception $e) {
+                    log_message('error', 'Image upload error: ' . $e->getMessage());
+                    // Continue with venue update even if image upload fails
+                }
+            }
+
             // Update venue pin
             $venue_pin_data = [
                 'lat' => (float)$data['lat'],
@@ -213,8 +304,10 @@ class VenueController extends ResourceController
         $user_id = $this->session->get('user_data')['user_id'];
         
         // Get venue details to check ownership
-        $venue = $this->venueModel->where('id', $id)
-            ->where('owner_profile', $user_id)
+        $venue = $this->venueModel->select('venue.*, venue_image.image_path, venue_image.id as image_id')
+            ->join('venue_image', 'venue_image.venue_id = venue.id', 'left')
+            ->where('venue.id', $id)
+            ->where('venue.owner_profile', $user_id)
             ->first();
 
         if (!$venue) {
@@ -224,6 +317,15 @@ class VenueController extends ResourceController
         $this->venueModel->db->transStart();
 
         try {
+            // Delete image if exists
+            if ($venue['image_id']) {
+                $image = $this->imageModel->find($venue['image_id']);
+                if ($image) {
+                    delete_image($image['image_path']);
+                    $this->imageModel->delete($venue['image_id']);
+                }
+            }
+
             // Delete venue (this will cascade delete the venue_pin due to foreign key)
             $this->venueModel->delete($id);
 

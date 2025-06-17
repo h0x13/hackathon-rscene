@@ -44,6 +44,16 @@ CREATE TABLE venue (
         FOREIGN KEY (owner_profile) REFERENCES user_credential(id)
 );
 
+CREATE TABLE venue_image (
+    id int primary key AUTO_INCREMENT,
+    name VARCHAR(100) NOT NULL,
+    venue_id int not null,
+    image_path VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        FOREIGN KEY (venue_id) REFERENCES venue(id)
+);
+
 CREATE TABLE event_performance (
 	id int primary key AUTO_INCREMENT,
     venue_id int not null, 

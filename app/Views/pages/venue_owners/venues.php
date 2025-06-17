@@ -24,6 +24,152 @@
         border-radius: 4px;
         display: none;
     }
+    .venue-image {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        border-radius: 4px;
+        margin-bottom: 1rem;
+    }
+    .image-preview {
+        position: relative;
+        margin-bottom: 1rem;
+        border: 2px dashed #dee2e6;
+        border-radius: 4px;
+        padding: 1rem;
+        text-align: center;
+        min-height: 200px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #f8f9fa;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .image-preview:hover {
+        border-color: #0d6efd;
+        background-color: #f1f3f5;
+    }
+    
+    .image-preview.dragover {
+        border-color: #0d6efd;
+        background-color: #e9ecef;
+    }
+    
+    .image-preview img {
+        max-width: 100%;
+        max-height: 200px;
+        object-fit: contain;
+        border-radius: 4px;
+    }
+    
+    .image-preview .remove-image {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: rgba(255, 255, 255, 0.9);
+        border: none;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        z-index: 2;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .image-preview .remove-image:hover {
+        background: #fff;
+        transform: scale(1.1);
+        box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+    
+    .image-preview .upload-placeholder {
+        color: #6c757d;
+        font-size: 0.9rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .image-preview .upload-placeholder i {
+        font-size: 2.5rem;
+        color: #adb5bd;
+        transition: all 0.3s ease;
+    }
+    
+    .image-preview:hover .upload-placeholder i {
+        color: #0d6efd;
+        transform: scale(1.1);
+    }
+    
+    .image-preview .upload-placeholder p {
+        margin: 0;
+    }
+    
+    .image-preview .upload-placeholder small {
+        color: #adb5bd;
+        font-size: 0.8rem;
+    }
+    
+    .image-preview.has-image {
+        border-style: solid;
+        padding: 0;
+        cursor: default;
+    }
+    
+    .image-preview.has-image:hover {
+        border-color: #dee2e6;
+        background-color: #f8f9fa;
+    }
+    
+    .image-preview.has-image .upload-placeholder {
+        display: none;
+    }
+    
+    .image-preview .progress {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: #e9ecef;
+        display: none;
+    }
+    
+    .image-preview .progress-bar {
+        background-color: #0d6efd;
+        transition: width 0.3s ease;
+    }
+    
+    .image-preview.uploading .progress {
+        display: block;
+    }
+    
+    .image-preview.uploading .upload-placeholder,
+    .image-preview.uploading img {
+        opacity: 0.5;
+    }
+    
+    .image-preview .error-message {
+        color: #dc3545;
+        font-size: 0.8rem;
+        margin-top: 0.5rem;
+        display: none;
+    }
+    
+    .image-preview.has-error .error-message {
+        display: block;
+    }
+    
+    .image-preview.has-error {
+        border-color: #dc3545;
+    }
 </style>
 <?= $this->endSection() ?>
 
@@ -50,6 +196,13 @@
                     <?php foreach ($venues as $venue): ?>
                         <div class="col-md-4 mb-4">
                             <div class="card h-100">
+                                <?php if (!empty($venue['image_path'])): ?>
+                                    <img src="<?= base_url('images/serve/' . $venue['image_path']) ?>" class="venue-image" alt="<?= esc($venue['venue_name']) ?>">
+                                <?php else: ?>
+                                    <div class="venue-image bg-light d-flex align-items-center justify-content-center">
+                                        <i class="bi bi-image text-muted" style="font-size: 3rem;"></i>
+                                    </div>
+                                <?php endif; ?>
                                 <div class="card-body">
                                     <h5 class="card-title"><?= esc($venue['venue_name']) ?></h5>
                                     <p class="card-text"><?= esc($venue['venue_description']) ?></p>
@@ -65,9 +218,9 @@
                                         </small>
                                     </p>
                                     <div class="btn-group">
-                                        <!-- <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editVenueModal<?= $venue['id'] ?>"> -->
-                                        <!--     <i class="bi bi-pencil"></i> Edit -->
-                                        <!-- </button> -->
+                                        <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editVenueModal<?= $venue['id'] ?>">
+                                            <i class="bi bi-pencil"></i> Edit
+                                        </button>
                                         <a href="<?= base_url('venue/delete/' . $venue['id']) ?>" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this venue?')">
                                             <i class="bi bi-trash"></i> Delete
                                         </a>
@@ -85,7 +238,25 @@
                                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                     </div>
                                     <div class="modal-body">
-                                        <form action="<?= base_url('venue/edit/' . $venue['id']) ?>" method="POST" id="editVenueForm<?= $venue['id'] ?>">
+                                        <form action="<?= base_url('venue/edit/' . $venue['id']) ?>" method="POST" id="editVenueForm<?= $venue['id'] ?>" enctype="multipart/form-data">
+                                            <div class="mb-3">
+                                                <label for="editVenueImage<?= $venue['id'] ?>" class="form-label">Venue Image</label>
+                                                <div class="image-preview <?= !empty($venue['image_path']) ? 'has-image' : '' ?>" id="editImagePreview<?= $venue['id'] ?>">
+                                                    <?php if (!empty($venue['image_path'])): ?>
+                                                        <img src="<?= base_url('images/serve/' . $venue['image_path']) ?>" alt="Venue Image">
+                                                        <button type="button" class="remove-image" onclick="removeEditImage(<?= $venue['id'] ?>)">
+                                                            <i class="bi bi-x-lg"></i>
+                                                        </button>
+                                                        <input type="hidden" name="current_image" value="<?= $venue['image_path'] ?>">
+                                                    <?php else: ?>
+                                                        <div class="upload-placeholder">
+                                                            <i class="bi bi-cloud-upload"></i>
+                                                            <p>Click to upload venue image</p>
+                                                        </div>
+                                                    <?php endif; ?>
+                                                </div>
+                                                <input type="file" class="form-control" id="editVenueImage<?= $venue['id'] ?>" name="venue_image" accept="image/*" onchange="previewEditImage(this, <?= $venue['id'] ?>)">
+                                            </div>
                                             <div class="row mb-3">
                                                 <div class="col-md-6">
                                                     <label for="editVenueName<?= $venue['id'] ?>" class="form-label">Venue Name</label>
@@ -157,7 +328,17 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form action="<?= base_url('venue/add') ?>" method="POST" id="venueForm">
+                <form action="<?= base_url('venue/add') ?>" method="POST" id="venueForm" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="venueImage" class="form-label">Venue Image</label>
+                        <div class="image-preview" id="imagePreview">
+                            <div class="upload-placeholder">
+                                <i class="bi bi-cloud-upload"></i>
+                                <p>Click to upload venue image</p>
+                            </div>
+                        </div>
+                        <input type="file" class="form-control" id="venueImage" name="venue_image" accept="image/*" onchange="previewImage(this)">
+                    </div>
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="venueName" class="form-label">Venue Name</label>
@@ -297,11 +478,138 @@ async function fetchEditAddressDetails(latlng, venueId) {
     }
 }
 
+// Image preview functions
+function previewImage(input) {
+    const preview = document.getElementById('imagePreview');
+    handleImagePreview(input, preview);
+}
+
+function previewEditImage(input, venueId) {
+    const preview = document.getElementById(`editImagePreview${venueId}`);
+    handleImagePreview(input, preview);
+}
+
+function handleImagePreview(input, preview) {
+    preview.innerHTML = '';
+    preview.classList.remove('has-error', 'uploading');
+    
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        
+        // Validate file type
+        const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+        if (!validTypes.includes(file.type)) {
+            showImageError(preview, 'Please select a valid image file (JPEG, PNG, or WebP)');
+            input.value = '';
+            return;
+        }
+        
+        // Validate file size (2MB max)
+        if (file.size > 2 * 1024 * 1024) {
+            showImageError(preview, 'Image size should not exceed 2MB');
+            input.value = '';
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.classList.add('has-image');
+            const img = document.createElement('img');
+            img.src = e.target.result;
+            preview.appendChild(img);
+            
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'remove-image';
+            removeBtn.innerHTML = '<i class="bi bi-x-lg"></i>';
+            removeBtn.onclick = function() {
+                input.value = '';
+                resetImagePreview(preview);
+            };
+            preview.appendChild(removeBtn);
+        }
+        reader.readAsDataURL(file);
+    }
+}
+
+function showImageError(preview, message) {
+    preview.classList.add('has-error');
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'error-message';
+    errorDiv.textContent = message;
+    preview.appendChild(errorDiv);
+}
+
+function resetImagePreview(preview) {
+    preview.innerHTML = `
+        <div class="upload-placeholder">
+            <i class="bi bi-cloud-upload"></i>
+            <p>Click to upload venue image</p>
+            <small>JPEG, PNG, or WebP (max 2MB)</small>
+        </div>
+    `;
+    preview.classList.remove('has-image', 'has-error', 'uploading');
+}
+
+function removeEditImage(venueId) {
+    const preview = document.getElementById(`editImagePreview${venueId}`);
+    const input = document.getElementById(`editVenueImage${venueId}`);
+    const currentImage = preview.querySelector('input[name="current_image"]');
+    
+    if (currentImage) {
+        currentImage.value = 'delete';
+    }
+    
+    resetImagePreview(preview);
+    input.value = '';
+}
+
+// Add drag and drop support
+function setupDragAndDrop(preview, input) {
+    preview.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        preview.classList.add('dragover');
+    });
+    
+    preview.addEventListener('dragleave', () => {
+        preview.classList.remove('dragover');
+    });
+    
+    preview.addEventListener('drop', (e) => {
+        e.preventDefault();
+        preview.classList.remove('dragover');
+        
+        if (e.dataTransfer.files.length) {
+            input.files = e.dataTransfer.files;
+            handleImagePreview(input, preview);
+        }
+    });
+    
+    preview.addEventListener('click', () => {
+        if (!preview.classList.contains('has-image')) {
+            input.click();
+        }
+    });
+}
+
+// Initialize drag and drop for all image previews
+document.addEventListener('DOMContentLoaded', function() {
+    const addPreview = document.getElementById('imagePreview');
+    const addInput = document.getElementById('venueImage');
+    setupDragAndDrop(addPreview, addInput);
+    
+    <?php foreach ($venues as $venue): ?>
+    const editPreview<?= $venue['id'] ?> = document.getElementById(`editImagePreview<?= $venue['id'] ?>`);
+    const editInput<?= $venue['id'] ?> = document.getElementById(`editVenueImage<?= $venue['id'] ?>`);
+    setupDragAndDrop(editPreview<?= $venue['id'] ?>, editInput<?= $venue['id'] ?>);
+    <?php endforeach; ?>
+});
+
 // Reset form
 function resetForm() {
     document.getElementById('venueForm').reset();
     document.getElementById('lat').value = '';
     document.getElementById('lon').value = '';
+    resetImagePreview(document.getElementById('imagePreview'));
     if (marker) {
         map.removeLayer(marker);
         marker = null;

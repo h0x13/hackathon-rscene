@@ -66,3 +66,6 @@ $routes->group('booking', function($routes) {
     $routes->post('cancel/(:num)', 'BookingController::cancel/$1');
     $routes->get('check-availability/(:num)', 'BookingController::checkAvailability/$1');
 });
+
+
+$routes->get('images/serve/(:any)', 'ImageController::serve/$1');
