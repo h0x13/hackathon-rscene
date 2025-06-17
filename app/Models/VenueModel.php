@@ -4,23 +4,25 @@ namespace App\Models;
 
 use CodeIgniter\Model;
 
-class EventPlannerAddress extends Model
+class VenueModel extends Model
 {
-    protected $table            = 'event_planner_address';
+    protected $table            = 'venue';
     protected $primaryKey       = 'id';
     protected $useAutoIncrement = true;
     protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
     protected $allowedFields    = [
-        'event_id',
-        'name',
-        'description',
-        'street_address',
+        'venue_name',
+        'pin_id',
+        'owner_profile',
+        'venue_description',
+        'street',
         'barangay',
         'city',
-        'country',
-        'zip_code'
+        'zip_code',
+        'rent',
+        'capacity',
     ];
 
     protected bool $allowEmptyInserts = false;
@@ -35,31 +37,34 @@ class EventPlannerAddress extends Model
 
     // Validation
     protected $validationRules = [
-        'event_id'       => 'required|integer',
-        'name'          => 'required|min_length[3]|max_length[255]',
-        'description'   => 'required|min_length[3]',
-        'street_address'=> 'required|min_length[3]|max_length[255]',
+        'venuename'     => 'required|min_length[3]|max_length[255]',
+        'pin_id'        => 'required|integer',
+        'owner_profile' => 'required|integer',
+        'venue_description'   => 'required|min_length[3]',
+        'street'=> 'required|min_length[3]|max_length[255]',
         'barangay'      => 'required|min_length[2]|max_length[255]',
         'city'          => 'required|min_length[2]|max_length[255]',
-        'country'       => 'required|min_length[2]|max_length[255]',
-        'zip_code'      => 'required|min_length[2]|max_length[20]'
+        'zip_code'      => 'required|min_length[2]|max_length[20]',
+        'rent'          => 'required|decimal',
+        'capacity'      => 'required|integer'
+        
     ];
 
     protected $validationMessages = [
-        'event_id' => [
-            'required' => 'Event ID is required',
-            'integer' => 'Event ID must be a valid number'
-        ],
-        'name' => [
+        'venue_name' => [
             'required' => 'Venue name is required',
             'min_length' => 'Venue name must be at least 3 characters long',
             'max_length' => 'Venue name cannot exceed 255 characters'
         ],
-        'description' => [
+        'pin_id' => [
+            'required' => 'PIN ID is required',
+            'integer' => 'PIN ID must be a valid number'
+        ],
+        'venue_description' => [
             'required' => 'Description is required',
             'min_length' => 'Description must be at least 3 characters long'
         ],
-        'street_address' => [
+        'street' => [
             'required' => 'Street address is required',
             'min_length' => 'Street address must be at least 3 characters long',
             'max_length' => 'Street address cannot exceed 255 characters'
@@ -74,16 +79,20 @@ class EventPlannerAddress extends Model
             'min_length' => 'City must be at least 2 characters long',
             'max_length' => 'City cannot exceed 255 characters'
         ],
-        'country' => [
-            'required' => 'Country is required',
-            'min_length' => 'Country must be at least 2 characters long',
-            'max_length' => 'Country cannot exceed 255 characters'
-        ],
         'zip_code' => [
             'required' => 'ZIP code is required',
             'min_length' => 'ZIP code must be at least 2 characters long',
             'max_length' => 'ZIP code cannot exceed 20 characters'
+        ],
+        'rent' => [
+            'required' => 'Rent is required',
+            'decimal' => 'Rent must be a valid decimal number'
+        ],
+        'capacity' => [
+            'required' => 'Capacity is required',
+            'integer' => 'Capacity must be a valid number'
         ]
+
     ];
 
     protected $skipValidation       = false;
