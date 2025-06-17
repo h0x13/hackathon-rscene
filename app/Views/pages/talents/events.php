@@ -187,9 +187,14 @@ Talents - Home
             <div class="invalid-feedback">Event description must be at least 10 characters long.</div>
           </div>
 
-          <div class="col-md-12">
-            <label>Event Date</label>
-            <input type="datetime-local" class="form-control" name="event_date" required>
+          <div class="col-md-6">
+            <label>Start Date</label>
+            <input type="datetime-local" class="form-control" name="start_date" required>
+          </div>
+
+          <div class="col-md-6">
+            <label>End Date</label>
+            <input type="datetime-local" class="form-control" name="end_date" required>
           </div>
           <!-- Auto-Filled Address Fields -->
           <div class="col-md-6">
@@ -292,25 +297,24 @@ Talents - Home
         venues.forEach(venue => {
             const marker = L.marker([venue.lat, venue.lng]).addTo(map);
             marker.bindPopup(
-                `<strong>${venue.name}</strong><br>${venue.city}, ${venue.province}<br>${venue.description}<br>
+                `<strong><span class="text-info fs-6">P${venue.rent}</span> - ${venue.name}</strong><br>${venue.city}, ${venue.province}<br>${venue.description}<br>
                 <button class="btn btn-primary btn-sm mt-2" data-bs-toggle="modal" data-bs-target="#addEventModal" data-venue="${encodeURIComponent(JSON.stringify(venue))}"
         onclick="bookVenue(JSON.parse(decodeURIComponent(this.dataset.venue)))">Book this venue</button>`
-            );
+            )
         });
     });
 
-      console.log(venues);
     function bookVenue(venue) {
       // Update title and visible text
       document.getElementById('addEventModalLabel').innerText = 'Book Venue - ' + venue.name;
       // Correctly select input fields by their actual IDs
-    document.querySelector('#street_address').value = venue.street || '';
-    document.querySelector('#barangay').value = venue.barangay || '';
-    document.querySelector('#city').value = venue.city || '';
-    document.querySelector('#province').value = venue.province || '';
-    document.querySelector('#lang').value = venue.lng || '';
-    document.querySelector('#lat').value = venue.lat || '';
-    document.querySelector('[name="zip_code"]').value = venue.zip_code || '';
+      document.querySelector('#street_address').value = venue.street || '';
+      document.querySelector('#barangay').value = venue.barangay || '';
+      document.querySelector('#city').value = venue.city || '';
+      document.querySelector('#province').value = venue.province || '';
+      document.querySelector('#lang').value = venue.lng || '';
+      document.querySelector('#lat').value = venue.lat || '';
+      document.querySelector('[name="zip_code"]').value = venue.zip_code || '';
     }
 
     function showBookingModal(eventId) {

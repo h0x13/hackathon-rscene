@@ -3,9 +3,10 @@
 namespace App\Controllers;
 
 use App\Controllers\BaseController;
-use App\Models\EventPlannerAddress;
-use App\Models\EventPlannerEvent;
-use App\Models\EventPlannerLocation;
+use App\Models\EventPerformance;
+use App\Models\VenueModel;
+use App\Models\VenuePin;
+use App\Models\BookingModel;
 
 class TalentController extends BaseController
 {
@@ -18,47 +19,46 @@ class TalentController extends BaseController
         // $Id = 1;
 
 
-        $eventModel = new EventPlannerEvent();
+        $eventModel = new EventPerformance();
         $events = $eventModel
             ->select('
-                event_planner_event.id,
-                event_planner_event.event_name,
-                event_planner_event.event_description,
-                event_planner_event.event_date,
-                event_planner_event.status,
-                event_planner_location.lat,
-                event_planner_location.long as lng,
-                event_planner_address.street_address as street,
-                event_planner_address.barangay,
-                event_planner_address.city,
-                event_planner_address.country,
-                event_planner_address.zip_code
+                event_performance.id,
+                event_performance.event_name,
+                event_performance.event_description,
+                event_performance.event_startdate,
+                event_performance.event_status,
+                vp.lat,
+                vp.lon as lng,
+                v.street,
+                v.barangay,
+                v.city,
+                v.zip_code,
+                v.rent
             ')
-            ->join('event_planner_location', 'event_planner_location.id = event_planner_event.location_id', 'left')
-            ->join('event_planner_address', 'event_planner_address.event_id = event_planner_event.id', 'left')
-            ->where('event_planner_event.event_date >=', date('Y-m-d'))
-            ->orderBy('event_planner_event.event_date', 'ASC')
+            ->join('venue v', 'v.id = event_performance.venue_id', 'left')
+            ->join('venue_pin vp', 'v.pin_id = vp.id', 'left')
+            ->where('event_performance.event_startdate >=', date('Y-m-d'))
+            ->orderBy('event_performance.event_startdate', 'ASC')
             ->limit(3)
             ->findAll();
 
         $eventForMap = $eventModel
             ->select('
-                event_planner_event.id,
-                event_planner_event.event_name,
-                event_planner_event.event_description,
-                event_planner_event.event_date,
-                event_planner_event.status,
-                event_planner_location.lat,
-                event_planner_location.long as lng,
-                event_planner_address.street_address as street,
-                event_planner_address.barangay,
-                event_planner_address.city,
-                event_planner_address.country,
-                event_planner_address.zip_code
+                event_performance.id,
+                event_performance.event_name,
+                event_performance.event_description,
+                event_performance.event_startdate,
+                event_performance.event_status,
+                vp.lat,
+                vp.lon as lng,
+                v.street,
+                v.barangay,
+                v.city,
+                v.zip_code
             ')
-            ->join('event_planner_location', 'event_planner_location.id = event_planner_event.location_id', 'left')
-            ->join('event_planner_address', 'event_planner_address.event_id = event_planner_event.id', 'left')
-            ->where('event_planner_event.event_date >=', date('Y-m-d'))
+            ->join('venue v', 'v.id = event_performance.venue_id', 'left')
+            ->join('venue_pin vp', 'v.pin_id = vp.id', 'left')
+            ->where('event_performance.event_startdate >=', date('Y-m-d'))
             ->findAll();
 
         $data = [
@@ -75,29 +75,28 @@ class TalentController extends BaseController
     {
             $session = session();
             $userId = $session->get('user_data')['user_id'] ?? null;
-            $Id = session()->get('user_data')['id'] ?? null;
 
-            $eventModel = new EventPlannerEvent();
+            $eventModel = new EventPerformance();
             $builder = $eventModel
                 ->select('
-                    event_planner_event.id,
-                    event_planner_event.event_name,
-                    event_planner_event.event_description,
-                    event_planner_event.event_date,
-                    event_planner_event.status,
-                    event_planner_location.lat,
-                    event_planner_location.long as lng,
-                    event_planner_address.street_address as street,
-                    event_planner_address.barangay,
-                    event_planner_address.city,
-                    event_planner_address.country,
-                    event_planner_address.zip_code,
+                    event_performance.id,
+                    event_performance.event_name,
+                    event_performance.event_description,
+                    event_performance.event_startdate,
+                    event_performance.event_status,
+                    venue_pin.lat,
+                    venue_pin.lon as lng,
+                    venue.street,
+                    venue.barangay,
+                    venue.city,
+                    venue.zip_code,
+                    venue.rent
                 ')
-                ->join('event_planner_location', 'event_planner_location.id = event_planner_event.location_id', 'left')
-                ->join('event_planner_address', 'event_planner_address.event_id = event_planner_event.id', 'left')
-                ->where('event_planner_event.event_organizer_id', $userId)
-                ->where('event_planner_event.event_date >=', date('Y-m-d'))
-                ->orderBy('event_planner_event.event_date', 'ASC')
+                ->join('venue', 'venue.id = event_performance.venue_id', 'left')
+                ->join('venue_pin', 'venue.pin_id = venue_pin.id', 'left')
+                ->where('event_performance.organizer_id', $userId)
+                ->where('event_performance.event_startdate >=', date('Y-m-d'))
+                ->orderBy('event_performance.event_startdate', 'ASC')
                 ->limit(3);
 
             $events = $builder->findAll();
@@ -111,7 +110,8 @@ class TalentController extends BaseController
                 'city' => 'Tacloban City',
                 'province' => 'Leyte',
                 'zip_code' => '5720',
-                'description' => 'A large venue for concerts and events.'
+                'description' => 'A large venue for concerts and events.',
+                'rent' => 5000
             ],
             [
                 'name' => 'Ormoc Superdome',
@@ -122,7 +122,8 @@ class TalentController extends BaseController
                 'city' => 'Calbalogan City',
                 'province' => 'Leyte',
                 'zip_code' => '5720',
-                'description' => 'Indoor arena for sports and music events.'
+                'description' => 'Indoor arena for sports and music events.',
+                'rent' => 6000
             ],
             [
                 'name' => 'Ormoc Grand Pavilion',
@@ -133,120 +134,9 @@ class TalentController extends BaseController
                 'city' => 'Calbalogan City',
                 'province' => 'Leyte',
                 'zip_code' => '5720',
-                'description' => 'Indoor arena for sports and music events.'
+                'description' => 'Indoor arena for sports and music events.',
+                'rent' => 7000
             ],
-            [
-                'name' => 'Calbayog Arena',
-                'lat' => 11.7745,
-                'lng' => 124.8927,
-                'street' => 'Rizal Avenue',
-                'barangay' => 'Barangay Obrero',
-                'city' => 'Calbalogan City',
-                'province' => 'Leyte',
-                'zip_code' => '5720',
-                'description' => 'Indoor arena for sports and music events.'
-            ],
-            [
-                'name' => 'Eastern Visayas Expo Center',
-                'lat' => 11.7782,
-                'lng' => 124.8927,
-                'street' => 'Samar Street',
-                'barangay' => 'Barangay Capoocan',
-                'city' => 'Calbalogan City',
-                'province' => 'Leyte',
-                'zip_code' => '5720',
-                'description' => 'Indoor arena for sports and music events.'
-            ],
-            [
-                'name' => 'Tacloban Event Hall',
-                'lat' => 11.7693,
-                'lng' => 124.8824,
-                'street' => 'Justice Romualdez St.',
-                'barangay' => 'Barangay Payapay',
-                'city' => 'Calbalogan City',
-                'province' => 'Leyte',
-                'zip_code' => '5720',
-                'description' => 'Indoor arena for sports and music events.'
-            ],
-            [
-                'name' => 'Baybay City Coliseum',
-                'lat' => 11.7718,
-                'lng' => 124.8899,
-                'street' => 'Bonifacio Street',
-                'barangay' => 'Barangay Guinsorongan',
-                'city' => 'Calbalogan City',
-                'province' => 'Leyte',
-                'zip_code' => '5720',
-                'description' => 'Indoor arena for sports and music events.'
-            ],
-            [
-                'name' => 'Palo Convention Hall',
-                'lat' => 11.7760,
-                'lng' => 124.8942,
-                'street' => 'J. Rizal Street',
-                'barangay' => 'Barangay Rawis',
-                'city' => 'Calbalogan City',
-                'province' => 'Leyte',
-                'zip_code' => '5720',
-                'description' => 'Indoor arena for sports and music events.'
-            ],
-            [
-                'name' => 'Leyte Civic Center',
-                'lat' => 11.7671,
-                'lng' => 124.8878,
-                'street' => 'Magsaysay Blvd',
-                'barangay' => 'Barangay Maulong',
-                'city' => 'Calbalogan City',
-                'province' => 'Leyte',
-                'zip_code' => '5720',
-                'description' => 'Indoor arena for sports and music events.'
-            ],
-            [
-                'name' => 'Samar Sports Dome',
-                'lat' => 11.7733,
-                'lng' => 124.8805,
-                'street' => 'Pedro Rosales St.',
-                'barangay' => 'Barangay Mercedes',
-                'city' => 'Calbalogan City',
-                'province' => 'Leyte',
-                'zip_code' => '5720',
-                'description' => 'Indoor arena for sports and music events.'
-            ],
-            [
-                'name' => 'Visayas Performance Hall',
-                'lat' => 11.7702,
-                'lng' => 124.8913,
-                'street' => 'Arellano Street',
-                'barangay' => 'Barangay San Andres',
-                'city' => 'Calbalogan City',
-                'province' => 'Leyte',
-                'zip_code' => '5720',
-                'description' => 'Indoor arena for sports and music events.'
-            ],
-            [
-                'name' => 'Ormoc Event Center',
-                'lat' => 11.7742,
-                'lng' => 124.8847,
-                'street' => 'Sta. Margarita Road',
-                'barangay' => 'Barangay Central',
-                'city' => 'Calbalogan City',
-                'province' => 'Leyte',
-                'zip_code' => '5720',
-                'description' => 'Indoor arena for sports and music events.'
-            ],
-            [
-                'name' => 'Super Arena Leyte',
-                'lat' => 11.7738,
-                'lng' => 124.8863,
-                'street' => 'San Francisco Street',
-                'barangay' => 'Barangay Rizal',
-                'city' => 'Calbalogan City',
-                'province' => 'Leyte',
-                'zip_code' => '5720',
-                'description' => 'Indoor arena for sports and music events.'
-            ],
-
-
 
         ];
 
@@ -284,77 +174,91 @@ class TalentController extends BaseController
     }
 
     public function saveEvent(){
-    $session = session();
-    $userId = $session->get('user_data')['user_id'] ?? null;
-    $Id = session()->get('user_data')['id'] ?? null;
-    if ($this->request->getMethod() === 'POST') {
-        // 1. Save Location
-        $locationModel = new EventPlannerLocation();
-        $locationData = [
-            'long' => $this->request->getPost('lang'),
-            'lat'  => $this->request->getPost('lat'),
-        ];
-        $locationInsert = $locationModel->insert($locationData);
-        log_message('debug', 'Location insert result: ' . var_export($locationInsert, true));
-        if (!$locationInsert) {
-            $session->setFlashdata('error', 'Failed to insert location.');
-            return redirect()->back();
-        }
-        $location_id = $locationModel->getInsertID();
-
-        // 2. Save Event
-        $eventModel = new EventPlannerEvent();
-        $eventData = [
-            'location_id'         => $location_id,
-            'event_name'          => $this->request->getPost('event_name'),
-            'event_description'   => $this->request->getPost('description'),
-            'event_organizer_id'  => $userId,
-            'event_date'          => $this->request->getPost('event_date'),
-            'status'              => 'pending',
-        ];
-        log_message('debug', 'Event description length before insert: ' . strlen($eventData['event_description']));
-        $eventInsert = $eventModel->insert($eventData);
-        log_message('debug', 'Event insert result: ' . var_export($eventInsert, true));
-        if (!$eventInsert) {
-            $errors = $eventModel->errors();
-            if (!empty($errors)) {
-                $session->setFlashdata('error', 'Failed to insert event: ' . implode(', ', $errors));
-            } else {
-                $session->setFlashdata('error', 'Failed to insert event due to an unknown error.');
+        $session = session();
+        $userId = $session->get('user_data')['user_id'] ?? null;
+        if ($this->request->getMethod() === 'POST') {
+            // 1. Save Location
+            $locationModel = new VenuePin();
+            $locationData = [
+                'lon' => $this->request->getPost('lang'),
+                'lat'  => $this->request->getPost('lat'),
+            ];
+            $locationInsert = $locationModel->insert($locationData);
+            log_message('debug', 'Location insert result: ' . var_export($locationInsert, true));
+            if (!$locationInsert) {
+                $session->setFlashdata('error', 'Failed to insert location.');
+                return redirect()->back();
             }
-            log_message('error', 'Event insertion failed: ' . var_export($errors, true));
-            return redirect()->back();
-        }
-        $event_id = $eventModel->getInsertID();
+            $location_id = $locationModel->getInsertID();
 
-        // 3. Save Address
-        $addressModel = new EventPlannerAddress();
-        $addressData = [
-            'event_id'       => $event_id,
-            'name'           => $this->request->getPost('event_name'),
-            'description'    => $this->request->getPost('description'),
-            'street_address' => $this->request->getPost('street_address'),
-            'barangay'       => $this->request->getPost('barangay'),
-            'city'           => $this->request->getPost('city'),
-            'country'        => 'Philippines',
-            'zip_code'       => $this->request->getPost('zip_code'),
-        ];
-        $addressInsert = $addressModel->insert($addressData);
-        log_message('debug', 'Address insert result: ' . var_export($addressInsert, true));
-        if (!$addressInsert) {
-            $errors = $addressModel->errors();
-            if (!empty($errors)) {
-                $session->setFlashdata('error', 'Failed to insert address: ' . implode(', ', $errors));
-            } else {
-                $session->setFlashdata('error', 'Failed to insert address due to an unknown error.');
+            // 2. Save Venue Information
+            $venueModel = new VenueModel();
+            $addressData = [
+                'venue_name'     => $this->request->getPost('event_name'),
+                'pin_id'         => $location_id,
+                'owner_profile' => $userId,
+                'venue_description'    => $this->request->getPost('description'),
+                'street_address' => $this->request->getPost('street_address'),
+                'barangay'       => $this->request->getPost('barangay'),
+                'city'           => $this->request->getPost('city'),
+                'country'        => 'Philippines',
+                'zip_code'       => $this->request->getPost('zip_code'),
+            ];
+            $addressInsert = $venueModel->insert($addressData);
+
+
+            // 2. Save Event
+            $eventModel = new EventPerformance();
+            $eventData = [
+                'event_name'          => $this->request->getPost('event_name'),
+                'event_description'   => $this->request->getPost('description'),
+                'organizer_id'        => $userId,
+                'event_startdate'     => $this->request->getPost('start_date'),
+                'event_enddate'       => $this->request->getPost('end_date'),
+                'event_status'        => 'Scheduled',
+                'booking_status'      => 'Pending',
+            ];
+            
+            log_message('debug', 'Event description length before insert: ' . strlen($eventData['event_description']));
+            $eventInsert = $eventModel->insert($eventData);
+            log_message('debug', 'Event insert result: ' . var_export($eventInsert, true));
+            if (!$eventInsert) {
+                $errors = $eventModel->errors();
+                if (!empty($errors)) {
+                    $session->setFlashdata('error', 'Failed to insert event: ' . implode(', ', $errors));
+                } else {
+                    $session->setFlashdata('error', 'Failed to insert event due to an unknown error.');
+                }
+                log_message('error', 'Event insertion failed: ' . var_export($errors, true));
+                return redirect()->back();
             }
-            log_message('error', 'Address insertion failed: ' . var_export($errors, true));
-            return redirect()->back();
-        }
+            $event_id = $eventModel->getInsertID();
 
-        $session->setFlashdata('success', 'Event created successfully!');
-        return redirect()->to('/talents/events');
-    }
+            $booking = new BookingModel();
+            $bookingData = [
+                'booking_event' => $event_id,
+                'artist' => $userId,
+                'booking_status' => 'Pending',
+            ];
+
+            $bookingInsert = $booking->insert($bookingData);
+            $bookingId = $booking->getInsertID();
+            
+            log_message('debug', 'Address insert result: ' . var_export($addressInsert, true));
+            if (!$addressInsert) {
+                $errors = $venueModel->errors();
+                if (!empty($errors)) {
+                    $session->setFlashdata('error', 'Failed to insert address: ' . implode(', ', $errors));
+                } else {
+                    $session->setFlashdata('error', 'Failed to insert address due to an unknown error.');
+                }
+                log_message('error', 'Address insertion failed: ' . var_export($errors, true));
+                return redirect()->back();
+            }
+
+            $session->setFlashdata('success', 'Event created successfully!');
+            return redirect()->to('/talents/events');
+        }
 
         $session->setFlashdata('error', 'Failed to create event. Please try again.');
         return redirect()->back()->with('error', 'Invalid request.');
@@ -362,26 +266,25 @@ class TalentController extends BaseController
 
     public function allEvents()
     {
-        $eventModel = new EventPlannerEvent();
+        $eventModel = new EventPerformance();
         $events = $eventModel
             ->select('
-                event_planner_event.id,
-                event_planner_event.event_name,
-                event_planner_event.event_description,
-                event_planner_event.event_date,
-                event_planner_event.status,
-                event_planner_location.lat,
-                event_planner_location.long as lng,
-                event_planner_address.street_address as street,
-                event_planner_address.barangay,
-                event_planner_address.city,
-                event_planner_address.country,
-                event_planner_address.zip_code
+                event_performance.id,
+                event_performance.event_name,
+                event_performance.event_description,
+                event_performance.event_startdate,
+                event_performance.event_status,
+                venue_pin.lat,
+                venue_pin.lon as lng,
+                venue.street as street,
+                venue.barangay,
+                venue.city,
+                venue.zip_code
             ')
-            ->join('event_planner_location', 'event_planner_location.id = event_planner_event.location_id', 'left')
-            ->join('event_planner_address', 'event_planner_address.event_id = event_planner_event.id', 'left')
-            ->where('event_planner_event.event_date >=', date('Y-m-d')) // Only future events
-            ->orderBy('event_planner_event.event_date', 'ASC') // Soonest first
+            ->join('venue', 'venue.id = event_performance.venue_id', 'left')
+            ->join('venue_pin', 'venue.pin_id = venue_pin.id', 'left')
+            ->where('event_performance.event_startdate >=', date('Y-m-d')) // Only future events
+            ->orderBy('event_performance.event_startdate', 'ASC') // Soonest first
             ->findAll();
 
         return view('pages/talents/all_events', ['events' => $events]);
@@ -392,25 +295,24 @@ class TalentController extends BaseController
         $session = session();
         $userId = $session->get('user_data')['user_id'] ?? null;
         $Id = session()->get('user_data')['id'] ?? null;
-        $eventModel = new EventPlannerEvent();
+        $eventModel = new EventPerformance();
         $events = $eventModel
             ->select('
-                event_planner_event.id,
-                event_planner_event.event_name,
-                event_planner_event.event_description,
-                event_planner_event.event_date,
-                event_planner_event.status,
-                event_planner_location.lat,
-                event_planner_location.long as lng,
-                event_planner_address.street_address as street,
-                event_planner_address.barangay,
-                event_planner_address.city,
-                event_planner_address.country,
-                event_planner_address.zip_code
+                event_performance.id,
+                event_performance.event_name,
+                event_performance.event_description,
+                event_performance.event_startdate,
+                event_performance.event_status,
+                venue_pin.lat,
+                venue_pin.lon as lng,
+                venue.street,
+                venue.barangay,
+                venue.city,
+                venue.zip_code
             ')
-            ->join('event_planner_location', 'event_planner_location.id = event_planner_event.location_id', 'left')
-            ->join('event_planner_address', 'event_planner_address.event_id = event_planner_event.id', 'left')
-            ->where('event_planner_event.event_organizer_id', $userId)
+            ->join('venue', 'venue.id = event_performance.venue_id', 'left')
+            ->join('venue_pin', 'venue.pin_id = venue_pin.id', 'left')
+            ->where('event_performance.organizer_id', $userId)
             ->findAll();
 
         return view('pages/talents/talents_event', ['events' => $events]);
