@@ -34,7 +34,7 @@
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
       <div class="sidebar-header text-info">
-         <i class="bi bi-palette"></i> ArtScene
+         <i class="bi bi-palette"></i> VenueConnect
          <span class="close-btn" onclick="toggleSidebar()"><i class="bi bi-x"></i></span>
       </div>
         <?php if (session()->get('user_data')['user_type'] === 'artist'): ?>
@@ -63,7 +63,7 @@
     <!-- Custom JS -->
     <script src="<?= base_url('js/script.js') ?>"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() { 
+        document.addEventListener('DOMContentLoaded', function() {
             <?php if(session()->getFlashdata('error')): ?>
                 Swal.fire({
                     icon: 'error',
@@ -71,7 +71,7 @@
                     text: '<?= session()->getFlashdata('error'); ?>'
                 });
             <?php endif; ?>
-            
+
             <?php if(session()->getFlashdata('success')): ?>
                 Swal.fire({
                     icon: 'success',
