@@ -51,17 +51,23 @@
                         <div class="col-md-4 mb-4">
                             <div class="card h-100">
                                 <div class="card-body">
-                                    <h5 class="card-title"><?= esc($venue['name']) ?></h5>
-                                    <p class="card-text"><?= esc($venue['description']) ?></p>
+                                    <h5 class="card-title"><?= esc($venue['venue_name']) ?></h5>
+                                    <p class="card-text"><?= esc($venue['venue_description']) ?></p>
                                     <p class="card-text">
                                         <small class="text-muted">
-                                            <i class="bi bi-geo-alt"></i> <?= esc($venue['street_address']) ?>, <?= esc($venue['barangay']) ?>, <?= esc($venue['city']) ?>
+                                            <i class="bi bi-geo-alt"></i> <?= esc($venue['street']) ?>, <?= esc($venue['barangay']) ?>, <?= esc($venue['city']) ?>
+                                        </small>
+                                    </p>
+                                    <p class="card-text">
+                                        <small class="text-muted">
+                                            <i class="bi bi-currency-dollar"></i> Rent: <?= number_format($venue['rent'], 2) ?> | 
+                                            <i class="bi bi-people"></i> Capacity: <?= $venue['capacity'] ?>
                                         </small>
                                     </p>
                                     <div class="btn-group">
-                                        <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editVenueModal<?= $venue['id'] ?>">
-                                            <i class="bi bi-pencil"></i> Edit
-                                        </button>
+                                        <!-- <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editVenueModal<?= $venue['id'] ?>"> -->
+                                        <!--     <i class="bi bi-pencil"></i> Edit -->
+                                        <!-- </button> -->
                                         <a href="<?= base_url('venue/delete/' . $venue['id']) ?>" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this venue?')">
                                             <i class="bi bi-trash"></i> Delete
                                         </a>
@@ -82,24 +88,24 @@
                                         <form action="<?= base_url('venue/edit/' . $venue['id']) ?>" method="POST" id="editVenueForm<?= $venue['id'] ?>">
                                             <div class="row mb-3">
                                                 <div class="col-md-6">
-                                                    <label for="editName<?= $venue['id'] ?>" class="form-label">Venue Name</label>
-                                                    <input type="text" class="form-control" id="editName<?= $venue['id'] ?>" name="name" value="<?= esc($venue['name']) ?>" required>
+                                                    <label for="editVenueName<?= $venue['id'] ?>" class="form-label">Venue Name</label>
+                                                    <input type="text" class="form-control" id="editVenueName<?= $venue['id'] ?>" name="venue_name" value="<?= esc($venue['venue_name']) ?>" required>
                                                 </div>
                                                 <div class="col-md-6">
-                                                    <label for="editDescription<?= $venue['id'] ?>" class="form-label">Description</label>
-                                                    <input type="text" class="form-control" id="editDescription<?= $venue['id'] ?>" name="description" value="<?= esc($venue['description']) ?>" required>
+                                                    <label for="editVenueDescription<?= $venue['id'] ?>" class="form-label">Description</label>
+                                                    <input type="text" class="form-control" id="editVenueDescription<?= $venue['id'] ?>" name="venue_description" value="<?= esc($venue['venue_description']) ?>" required>
                                                 </div>
                                             </div>
                                             <div class="mb-3">
                                                 <label class="form-label">Location</label>
                                                 <div id="editMap<?= $venue['id'] ?>" style="height: 300px;"></div>
                                                 <input type="hidden" name="lat" id="editLat<?= $venue['id'] ?>" value="<?= $venue['lat'] ?>">
-                                                <input type="hidden" name="long" id="editLong<?= $venue['id'] ?>" value="<?= $venue['long'] ?>">
+                                                <input type="hidden" name="lon" id="editLon<?= $venue['id'] ?>" value="<?= $venue['lon'] ?>">
                                             </div>
                                             <div class="row mb-3">
                                                 <div class="col-md-6">
-                                                    <label for="editStreetAddress<?= $venue['id'] ?>" class="form-label">Street Address</label>
-                                                    <input type="text" class="form-control" id="editStreetAddress<?= $venue['id'] ?>" name="street_address" value="<?= esc($venue['street_address']) ?>" required>
+                                                    <label for="editStreet<?= $venue['id'] ?>" class="form-label">Street Address</label>
+                                                    <input type="text" class="form-control" id="editStreet<?= $venue['id'] ?>" name="street" value="<?= esc($venue['street']) ?>" required>
                                                 </div>
                                                 <div class="col-md-6">
                                                     <label for="editBarangay<?= $venue['id'] ?>" class="form-label">Barangay</label>
@@ -112,12 +118,18 @@
                                                     <input type="text" class="form-control" id="editCity<?= $venue['id'] ?>" name="city" value="<?= esc($venue['city']) ?>" required>
                                                 </div>
                                                 <div class="col-md-4">
-                                                    <label for="editCountry<?= $venue['id'] ?>" class="form-label">Country</label>
-                                                    <input type="text" class="form-control" id="editCountry<?= $venue['id'] ?>" name="country" value="<?= esc($venue['country']) ?>" required>
-                                                </div>
-                                                <div class="col-md-4">
                                                     <label for="editZipCode<?= $venue['id'] ?>" class="form-label">ZIP Code</label>
                                                     <input type="text" class="form-control" id="editZipCode<?= $venue['id'] ?>" name="zip_code" value="<?= esc($venue['zip_code']) ?>" required>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label for="editCapacity<?= $venue['id'] ?>" class="form-label">Capacity</label>
+                                                    <input type="number" class="form-control" id="editCapacity<?= $venue['id'] ?>" name="capacity" value="<?= esc($venue['capacity']) ?>" required>
+                                                </div>
+                                            </div>
+                                            <div class="row mb-3">
+                                                <div class="col-md-6">
+                                                    <label for="editRent<?= $venue['id'] ?>" class="form-label">Rent (PHP)</label>
+                                                    <input type="number" step="0.01" class="form-control" id="editRent<?= $venue['id'] ?>" name="rent" value="<?= esc($venue['rent']) ?>" required>
                                                 </div>
                                             </div>
                                             <div class="text-end">
@@ -149,23 +161,23 @@
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="venueName" class="form-label">Venue Name</label>
-                            <input type="text" class="form-control" id="venueName" name="name" required>
+                            <input type="text" class="form-control" id="venueName" name="venue_name" required>
                         </div>
                         <div class="col-md-6">
                             <label for="venueDescription" class="form-label">Description</label>
-                            <input type="text" class="form-control" id="venueDescription" name="description" required>
+                            <input type="text" class="form-control" id="venueDescription" name="venue_description" required>
                         </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Location</label>
                         <div id="map" style="height: 300px;"></div>
                         <input type="hidden" name="lat" id="lat">
-                        <input type="hidden" name="long" id="long">
+                        <input type="hidden" name="lon" id="lon">
                     </div>
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label for="streetAddress" class="form-label">Street Address</label>
-                            <input type="text" class="form-control" id="streetAddress" name="street_address" required>
+                            <label for="street" class="form-label">Street Address</label>
+                            <input type="text" class="form-control" id="street" name="street" required>
                         </div>
                         <div class="col-md-6">
                             <label for="barangay" class="form-label">Barangay</label>
@@ -178,12 +190,18 @@
                             <input type="text" class="form-control" id="city" name="city" required>
                         </div>
                         <div class="col-md-4">
-                            <label for="country" class="form-label">Country</label>
-                            <input type="text" class="form-control" id="country" name="country" required>
-                        </div>
-                        <div class="col-md-4">
                             <label for="zipCode" class="form-label">ZIP Code</label>
                             <input type="text" class="form-control" id="zipCode" name="zip_code" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="capacity" class="form-label">Capacity</label>
+                            <input type="number" class="form-control" id="capacity" name="capacity" required>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="rent" class="form-label">Rent (PHP)</label>
+                            <input type="number" step="0.01" class="form-control" id="rent" name="rent" required>
                         </div>
                     </div>
                     <div class="text-end">
@@ -226,7 +244,7 @@ function initEditMap(venueId, lat, lng) {
         editMap.on('click', function(e) {
             editMarker.setLatLng(e.latlng);
             document.getElementById(`editLat${venueId}`).value = e.latlng.lat;
-            document.getElementById(`editLong${venueId}`).value = e.latlng.lng;
+            document.getElementById(`editLon${venueId}`).value = e.latlng.lng;
             fetchEditAddressDetails(e.latlng, venueId);
         });
 
@@ -242,7 +260,7 @@ function updateMarker(latlng) {
         marker = L.marker(latlng).addTo(map);
     }
     document.getElementById('lat').value = latlng.lat;
-    document.getElementById('long').value = latlng.lng;
+    document.getElementById('lon').value = latlng.lng;
 }
 
 // Fetch address details from coordinates for add form
@@ -252,10 +270,9 @@ async function fetchAddressDetails(latlng) {
         const data = await response.json();
         
         if (data.address) {
-            document.getElementById('streetAddress').value = data.address.road || '';
+            document.getElementById('street').value = data.address.road || '';
             document.getElementById('barangay').value = data.address.suburb || '';
             document.getElementById('city').value = data.address.city || data.address.town || '';
-            document.getElementById('country').value = data.address.country || '';
             document.getElementById('zipCode').value = data.address.postcode || '';
         }
     } catch (error) {
@@ -270,10 +287,9 @@ async function fetchEditAddressDetails(latlng, venueId) {
         const data = await response.json();
         
         if (data.address) {
-            document.getElementById(`editStreetAddress${venueId}`).value = data.address.road || '';
+            document.getElementById(`editStreet${venueId}`).value = data.address.road || '';
             document.getElementById(`editBarangay${venueId}`).value = data.address.suburb || '';
             document.getElementById(`editCity${venueId}`).value = data.address.city || data.address.town || '';
-            document.getElementById(`editCountry${venueId}`).value = data.address.country || '';
             document.getElementById(`editZipCode${venueId}`).value = data.address.postcode || '';
         }
     } catch (error) {
@@ -285,7 +301,7 @@ async function fetchEditAddressDetails(latlng, venueId) {
 function resetForm() {
     document.getElementById('venueForm').reset();
     document.getElementById('lat').value = '';
-    document.getElementById('long').value = '';
+    document.getElementById('lon').value = '';
     if (marker) {
         map.removeLayer(marker);
         marker = null;
@@ -302,7 +318,7 @@ document.getElementById('addVenueModal').addEventListener('shown.bs.modal', func
 // Initialize edit map when edit modal is shown
 <?php foreach ($venues as $venue): ?>
 document.getElementById('editVenueModal<?= $venue['id'] ?>').addEventListener('shown.bs.modal', function () {
-    initEditMap(<?= $venue['id'] ?>, <?= $venue['lat'] ?>, <?= $venue['long'] ?>);
+    initEditMap(<?= $venue['id'] ?>, <?= $venue['lat'] ?>, <?= $venue['lon'] ?>);
 });
 <?php endforeach; ?>
 

@@ -2,9 +2,8 @@
 
 namespace App\Controllers;
 
-use App\Models\EventPlannerLocation;
-use App\Models\EventPlannerAddress;
-use App\Models\EventPlannerEvent;
+use App\Models\VenueModel;
+use App\Models\VenuePin;
 use CodeIgniter\RESTful\ResourceController;
 use CodeIgniter\API\ResponseTrait;
 
@@ -12,16 +11,14 @@ class VenueController extends ResourceController
 {
     use ResponseTrait;
 
-    protected $locationModel;
-    protected $addressModel;
-    protected $eventModel;
+    protected $venueModel;
+    protected $venuePinModel;
     protected $session;
 
     public function __construct()
     {
-        $this->locationModel = new EventPlannerLocation();
-        $this->addressModel = new EventPlannerAddress();
-        $this->eventModel = new EventPlannerEvent();
+        $this->venueModel = new VenueModel();
+        $this->venuePinModel = new VenuePin();
         $this->session = \Config\Services::session();
     }
 
@@ -42,19 +39,9 @@ class VenueController extends ResourceController
 
         $user_id = $this->session->get('user_data')['user_id'];
         
-        $venues = $this->locationModel->select('
-                event_planner_location.id,
-                event_planner_location.lat,
-                event_planner_location.long,
-                event_planner_address.name,
-                event_planner_address.description,
-                event_planner_address.street_address,
-                event_planner_address.barangay,
-                event_planner_address.city,
-                event_planner_address.country,
-                event_planner_address.zip_code
-            ')
-            ->join('event_planner_address', 'event_planner_address.event_id = event_planner_location.id')
+        $venues = $this->venueModel->select('venue.*, venue_pin.lat, venue_pin.lon')
+            ->join('venue_pin', 'venue_pin.id = venue.pin_id')
+            ->where('venue.owner_profile', $user_id)
             ->findAll();
 
         if ($this->request->isAJAX()) {
@@ -76,7 +63,7 @@ class VenueController extends ResourceController
         $data = $this->request->getPost();
 
         // Validate required fields
-        $required_fields = ['name', 'description', 'lat', 'long', 'street_address', 'barangay', 'city', 'country', 'zip_code'];
+        $required_fields = ['venue_name', 'venue_description', 'street', 'barangay', 'city', 'zip_code', 'rent', 'capacity', 'lat', 'lon'];
         foreach ($required_fields as $field) {
             if (empty($data[$field])) {
                 return redirect()->back()->with('error', "Field {$field} is required");
@@ -84,90 +71,57 @@ class VenueController extends ResourceController
         }
 
         // Start transaction
-        $this->locationModel->db->transStart();
+        $this->venueModel->db->transStart();
 
         try {
-            // Add location
-            $location_data = [
+            // Add Venue Pin
+            $venue_pin_data = [
                 'lat' => (float)$data['lat'],
-                'long' => (float)$data['long']
+                'lon' => (float)$data['lon']
             ];
-            $location_id = $this->locationModel->insert($location_data);
+            $pin_id = $this->venuePinModel->insert($venue_pin_data);
             
-            if (!$location_id) {
+            if (!$pin_id) {
                 throw new \Exception('Failed to add venue location');
             }
 
-            // Add address
-            $address_data = [
-                'event_id' => $location_id,
-                'name' => trim($data['name']),
-                'description' => trim($data['description']),
-                'street_address' => trim($data['street_address']),
+            // Add Venue
+            $venue_data = [
+                'pin_id' => $pin_id,
+                'owner_profile' => $user_id,
+                'venue_name' => trim($data['venue_name']),
+                'venue_description' => trim($data['venue_description']),
+                'street' => trim($data['street']),
                 'barangay' => trim($data['barangay']),
                 'city' => trim($data['city']),
-                'country' => trim($data['country']),
-                'zip_code' => trim($data['zip_code'])
+                'rent' => trim($data['rent']),
+                'zip_code' => trim($data['zip_code']),
+                'capacity' => trim($data['capacity'])
             ];
 
-            // Validate address data
-            if (!$this->addressModel->validate($address_data)) {
-                throw new \Exception(implode(', ', $this->addressModel->errors()));
+            // Validate venue data
+            if (!$this->venueModel->validate($venue_data)) {
+                throw new \Exception(implode(', ', $this->venueModel->errors()));
             }
 
-            $address_id = $this->addressModel->insert($address_data);
+            $venue_id = $this->venueModel->insert($venue_data);
             
-            if (!$address_id) {
-                throw new \Exception('Failed to add venue address');
+            if (!$venue_id) {
+                throw new \Exception('Failed to add venue');
             }
 
-            $this->locationModel->db->transComplete();
+            $this->venueModel->db->transComplete();
 
-            if ($this->locationModel->db->transStatus() === false) {
+            if ($this->venueModel->db->transStatus() === false) {
                 return redirect()->back()->with('error', 'Failed to add venue');
             }
 
             return redirect()->to('venue/list')->with('success', 'Venue added successfully');
         } catch (\Exception $e) {
-            $this->locationModel->db->transRollback();
+            $this->venueModel->db->transRollback();
             log_message('error', 'Venue add error: ' . $e->getMessage());
             return redirect()->back()->with('error', $e->getMessage());
         }
-    }
-
-    public function view($id)
-    {
-        if (!$this->session->get('user_data')) {
-            return $this->fail('Unauthorized', 401);
-        }
-
-        $user_id = $this->session->get('user_data')['user_id'];
-        
-        $venue = $this->eventModel->select('
-                event_planner_event.id,
-                event_planner_event.event_name as name,
-                event_planner_event.event_description as description,
-                event_planner_event.status,
-                event_planner_location.lat,
-                event_planner_location.long,
-                event_planner_address.name as venue_name,
-                event_planner_address.street_address,
-                event_planner_address.barangay,
-                event_planner_address.city,
-                event_planner_address.country,
-                event_planner_address.zip_code
-            ')
-            ->join('event_planner_location', 'event_planner_location.id = event_planner_event.location_id')
-            ->join('event_planner_address', 'event_planner_address.event_id = event_planner_event.id')
-            ->where('event_planner_event.id', $id)
-            ->where('event_planner_event.event_organizer_id', $user_id)
-            ->first();
-
-        if (!$venue) {
-            return $this->fail('Venue not found');
-        }
-
-        return $this->respond(['venue' => $venue]);
     }
 
     public function edit($id = null)
@@ -184,7 +138,7 @@ class VenueController extends ResourceController
         $data = $this->request->getPost();
 
         // Validate required fields
-        $required_fields = ['name', 'description', 'lat', 'long', 'street_address', 'barangay', 'city', 'country', 'zip_code'];
+        $required_fields = ['venue_name', 'venue_description', 'street', 'barangay', 'city', 'zip_code', 'rent', 'capacity', 'lat', 'lon'];
         foreach ($required_fields as $field) {
             if (empty($data[$field])) {
                 return redirect()->back()->with('error', "Field {$field} is required");
@@ -192,51 +146,55 @@ class VenueController extends ResourceController
         }
 
         // Get venue details
-        $venue = $this->locationModel->find($id);
+        $venue = $this->venueModel->select('venue.*, venue_pin.lat, venue_pin.lon')
+            ->join('venue_pin', 'venue_pin.id = venue.pin_id')
+            ->where('venue.id', $id)
+            ->where('venue.owner_profile', $user_id)
+            ->first();
 
         if (!$venue) {
             return redirect()->back()->with('error', 'Venue not found');
         }
 
         // Start transaction
-        $this->locationModel->db->transStart();
+        $this->venueModel->db->transStart();
 
         try {
-            // Update location
-            $location_data = [
+            // Update venue pin
+            $venue_pin_data = [
                 'lat' => (float)$data['lat'],
-                'long' => (float)$data['long']
+                'lon' => (float)$data['lon']
             ];
-            $this->locationModel->update($id, $location_data);
+            $this->venuePinModel->update($venue['pin_id'], $venue_pin_data);
 
-            // Update address
-            $address_data = [
-                'name' => trim($data['name']),
-                'description' => trim($data['description']),
-                'street_address' => trim($data['street_address']),
+            // Update venue
+            $venue_data = [
+                'venue_name' => trim($data['venue_name']),
+                'venue_description' => trim($data['venue_description']),
+                'street' => trim($data['street']),
                 'barangay' => trim($data['barangay']),
                 'city' => trim($data['city']),
-                'country' => trim($data['country']),
-                'zip_code' => trim($data['zip_code'])
+                'rent' => trim($data['rent']),
+                'zip_code' => trim($data['zip_code']),
+                'capacity' => trim($data['capacity'])
             ];
 
-            // Validate address data
-            if (!$this->addressModel->validate($address_data)) {
-                throw new \Exception(implode(', ', $this->addressModel->errors()));
+            // Validate venue data
+            if (!$this->venueModel->validate($venue_data)) {
+                throw new \Exception(implode(', ', $this->venueModel->errors()));
             }
 
-            // Update address using location_id instead of event_id
-            $this->addressModel->where('event_id', $id)->set($address_data)->update();
+            $this->venueModel->update($id, $venue_data);
 
-            $this->locationModel->db->transComplete();
+            $this->venueModel->db->transComplete();
 
-            if ($this->locationModel->db->transStatus() === false) {
+            if ($this->venueModel->db->transStatus() === false) {
                 return redirect()->back()->with('error', 'Failed to update venue');
             }
 
             return redirect()->to('venue/list')->with('success', 'Venue updated successfully');
         } catch (\Exception $e) {
-            $this->locationModel->db->transRollback();
+            $this->venueModel->db->transRollback();
             log_message('error', 'Venue update error: ' . $e->getMessage());
             return redirect()->back()->with('error', $e->getMessage());
         }
@@ -253,27 +211,31 @@ class VenueController extends ResourceController
         }
 
         $user_id = $this->session->get('user_data')['user_id'];
-        $venue = $this->locationModel->find($id);
+        
+        // Get venue details to check ownership
+        $venue = $this->venueModel->where('id', $id)
+            ->where('owner_profile', $user_id)
+            ->first();
 
         if (!$venue) {
             return redirect()->back()->with('error', 'Venue not found');
         }
 
-        $this->locationModel->db->transStart();
+        $this->venueModel->db->transStart();
 
         try {
-            $this->addressModel->where('event_id', $id)->delete();
-            $this->locationModel->delete($id);
+            // Delete venue (this will cascade delete the venue_pin due to foreign key)
+            $this->venueModel->delete($id);
 
-            $this->locationModel->db->transComplete();
+            $this->venueModel->db->transComplete();
 
-            if ($this->locationModel->db->transStatus() === false) {
+            if ($this->venueModel->db->transStatus() === false) {
                 return redirect()->back()->with('error', 'Failed to delete venue');
             }
 
             return redirect()->to('venue/list')->with('success', 'Venue deleted successfully');
         } catch (\Exception $e) {
-            $this->locationModel->db->transRollback();
+            $this->venueModel->db->transRollback();
             return redirect()->back()->with('error', $e->getMessage());
         }
     }
