@@ -2,12 +2,9 @@
 
 namespace App\Controllers;
 
-use App\Models\EventPlannerEvent;
-use App\Models\EventPlannerBooking;
-use App\Models\EventPlannerBookingPayment;
+use App\Models\BookingModel;
+use App\Models\EventPerformance;
 use App\Models\UserProfileModel;
-use App\Models\EventPlannerLocation;
-use App\Models\EventPlannerAddress;
 use CodeIgniter\RESTful\ResourceController;
 use CodeIgniter\API\ResponseTrait;
 use CodeIgniter\Database\BaseConnection;
@@ -27,12 +24,10 @@ class BookingController extends ResourceController
 
     public function __construct()
     {
-        $this->eventModel = new EventPlannerEvent();
-        $this->bookingModel = new EventPlannerBooking();
-        $this->paymentModel = new EventPlannerBookingPayment();
+        $this->eventModel = new EventPerformance();
+        $this->bookingModel = new BookingModel();
+        $this->paymentModel = new BookingModel();
         $this->userProfileModel = new UserProfileModel();
-        $this->locationModel = new EventPlannerLocation();
-        $this->addressModel = new EventPlannerAddress();
         $this->session = \Config\Services::session();
         $this->db = \Config\Database::connect();
     }
