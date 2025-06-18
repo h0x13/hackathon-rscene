@@ -10,6 +10,7 @@
    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
    <!-- Font Awesome for Icons -->
    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
+   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
    <style>
       body {
             font-family: 'Poppins', sans-serif;
@@ -192,6 +193,18 @@
             font-size: 0.95rem;
             border-radius: 10px; /* Reverted to original curvature */
       }
+      .map-container {
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            margin-bottom: 3rem;
+            animation: fadeInUp 0.8s ease-in-out;
+        }
+        #map {
+            height: 600px;
+            width: 100%;
+            border-radius: 15px;
+        }
    </style>
 </head>
 <body>
@@ -230,6 +243,16 @@
             <a href="/register" class="btn btn-primary">Start Booking Now</a>
       </div>
    </section>
+
+   <!-- Map Section -->
+    <section id="features" class="py-5">
+      <div class="container p-5">
+            <h2 class="text-center mb-5">Upcoming Performances and Events</h2>
+            <div class="map-container pe-5">
+                  <div id="map"></div>
+            </div>
+      </div>
+    </section>
 
    <!-- Features Section -->
    <section id="features" class="py-5">
@@ -368,5 +391,45 @@
    <!-- Bootstrap JS and Popper.js -->
    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"></script>
+
+   <script src="<?= base_url('js/script.js') ?>"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            <?php if(session()->getFlashdata('error')): ?>
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: '<?= session()->getFlashdata('error'); ?>'
+                });
+            <?php endif; ?>
+
+            <?php if(session()->getFlashdata('success')): ?>
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success',
+                    text: '<?= session()->getFlashdata('success'); ?>'
+                });
+            <?php endif; ?>
+        });
+    </script>
+      s<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+      <script>
+      const venues = <?= json_encode($eventForMap) ?>;
+
+      document.addEventListener('DOMContentLoaded', function() {
+            const map = L.map('map').setView([11.7693, 124.8824], 10);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                  attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            venues.forEach(venue => {
+                  const marker = L.marker([venue.lat, venue.lng]).addTo(map);
+                  marker.bindPopup(
+                  `<strong><span class="text-info fs-5">P${venue.rent}</span> - ${venue.event_name}</strong><br>${venue.city}, ${venue.country}<br>${venue.event_description}<br>`
+                  );
+            });
+      });
+      </script>
+
 </body>
 </html>
