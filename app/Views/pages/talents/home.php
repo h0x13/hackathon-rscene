@@ -14,11 +14,12 @@ VenueConnect - Discover Events
             overflow-x: hidden;
         }
 
-        .container {
-            position: relative;
+         .container {
+            /* position: relative; */
             z-index: 1;
             animation: fadeInUp 0.8s ease-in-out;
         }
+        
         .header-section {
             text-align: center;
             margin-bottom: 3rem;
@@ -81,6 +82,34 @@ VenueConnect - Discover Events
             font-size: 0.9rem;
             color: #6c757d;
             margin-bottom: 0.5rem;
+        }
+        .btn-primary, .btn-success {
+            background: linear-gradient(to right, #6e8efb, #a777e3);
+            border: none;
+            font-weight: 500;
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-primary:hover, .btn-success:hover {
+            background: linear-gradient(to right, #5a75e8, #8e5ed0);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(110, 142, 251, 0.5);
+        }
+        .btn-primary::after, .btn-success::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: 0.5s;
+        }
+        .btn-primary:hover::after, .btn-success:hover::after {
+            left: 100%;
         }
         .btn-outline-primary {
             border-color: #6e8efb;
@@ -154,21 +183,18 @@ VenueConnect - Discover Events
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
             border: none;
             background: white;
-            
         }
         .modal-header {
-            border-bottom: 1px solid #e0e0e0;
             background: linear-gradient(to right, #6e8efb, #a777e3);
             color: white;
             border-radius: 15px 15px 0 0;
+            border-bottom: none;
         }
         .modal-title {
             font-weight: 600;
             font-size: 1.25rem;
         }
         .modal-body {
-            font-size: 0.95rem;
-            color: #2c3e50;
             padding: 1.5rem;
         }
         .btn-close {
@@ -181,7 +207,7 @@ VenueConnect - Discover Events
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
-        }
+        } 
     </style>
 <?= $this->endSection() ?>
 
@@ -231,7 +257,7 @@ VenueConnect - Discover Events
                     </div> <!-- end card -->
 
                     <!-- Modal -->
-                    <div class="modal" id="eventModal<?= esc($event['id']) ?>" tabindex="-1">
+                    <div class="modal fade" id="eventModal<?= esc($event['id']) ?>" tabindex="-1">
                         <div class="modal-dialog modal-lg">
                             <div class="modal-content">
                                 <div class="modal-header">

@@ -66,7 +66,7 @@ VenueConnect - Home
             border-radius: 15px;
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
             transition: all 0.4s ease;
-            background: #ffffff; /* White background for cards */
+            background: #ffffff; 
             overflow: hidden;
         }
         .event-card:hover {
@@ -80,9 +80,7 @@ VenueConnect - Home
             width: 100%;
             transition: transform 0.3s ease;
         }
-        .event-card:hover .event-img {
-            transform: scale(1.05);
-        }
+
         .card-body {
             padding: 1.5rem;
         }
@@ -159,7 +157,6 @@ VenueConnect - Home
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
             border: none;
             background: white;
-            animation: fadeInUp 0.5s ease-in-out;
         }
         .modal-header {
             background: linear-gradient(to right, #6e8efb, #a777e3);
