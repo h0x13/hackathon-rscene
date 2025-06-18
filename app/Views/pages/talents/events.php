@@ -7,6 +7,7 @@ VenueConnect - Home
 <?= $this->section('local_css') ?>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.css">
     <style>
         body {
             font-family: 'Poppins', sans-serif;
@@ -499,6 +500,7 @@ VenueConnect - Home
 
 <?= $this->section('local_javascript') ?>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>
 <script>
     const venues = <?= json_encode($venues) ?>;
 
@@ -629,6 +631,22 @@ VenueConnect - Home
             alert(error.message || 'Failed to create booking');
         });
     }
+
+    const addEventModal = document.getElementById('addEventModal');
+
+    addEventModal.addEventListener('show.bs.modal', function (event) {
+        const urlProfile = "<?= site_url('talents/profile')?>";
+        if (<?= empty(session()->get('artist_data'))? 1 : 0 ?>) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Profile Update Required',
+                html: `Please <a href="${urlProfile}">update your artist information</a> before proceeding with bookings.`,
+                confirmButtonText: 'OK'
+            });
+            event.preventDefault();
+            return;
+        }
+    });
 
     document.getElementById('bookingDate').addEventListener('change', generateTimeSlots);
 </script>

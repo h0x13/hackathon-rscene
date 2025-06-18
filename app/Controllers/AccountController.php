@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Models\UserProfileModel;
 use App\Models\UserCredentialModel;
+use App\Models\ArtistModel;
 use CodeIgniter\RESTful\ResourceController;
 use CodeIgniter\API\ResponseTrait;
 
@@ -14,6 +15,7 @@ class AccountController extends ResourceController
 
     protected $userProfileModel;
     protected $userCredentialModel;
+    protected $artistModel;
     protected $session;
     protected $email;
 
@@ -21,6 +23,7 @@ class AccountController extends ResourceController
     {
         $this->userProfileModel = new UserProfileModel();
         $this->userCredentialModel = new UserCredentialModel();
+        $this->artistModel = new ArtistModel();
         $this->session = \Config\Services::session();
         $this->email = \Config\Services::email();
     }
@@ -96,7 +99,12 @@ class AccountController extends ResourceController
                 'email' => $email,
                 'user_type' => $user['user_type']
             ]);
-            // dd($user_profile);
+
+            $artistData = [];
+            if ($user['user_type'] === 'artist') {
+                $artistData = $this->artistModel->find($user['id']);
+            }
+
             return $this->respond([
                 'success' => true,
                 'message' => 'Login successful',
@@ -105,7 +113,8 @@ class AccountController extends ResourceController
                     'first_name' => $user_profile['first_name'],
                     'last_name' => $user_profile['last_name'],
                     'user_type' => $user['user_type']
-                ]
+                ],
+                'artist_data' => $artistData,
             ]);
         }
 

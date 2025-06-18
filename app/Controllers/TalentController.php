@@ -176,6 +176,11 @@ class TalentController extends BaseController
     $userId = $session->get('user_data')['user_id'] ?? null;
 
     if ($this->request->getMethod() === 'POST') {
+        if (empty(session()->get('artist_data'))) {
+            $session->setFlashdata('error', 'Please update your artist information before proceeding with bookings.');
+            return redirect()->back();
+        }
+
         // Load models
         $eventModel = new EventPerformance();
         $bookingModel = new BookingModel();
