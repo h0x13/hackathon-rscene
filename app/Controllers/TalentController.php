@@ -329,14 +329,14 @@ class TalentController extends BaseController
 
             // Update artist info (artist_name, talent_fee, base_rate, mode_of_payments)
             // Adjust model/fields as per your schema
-            if (isset($json['artist_name']) || isset($json['talent_fee']) || isset($json['base_rate']) || isset($json['mod'])) {
+            if (isset($json['artist_name']) || isset($json['talent_fee']) || isset($json['base_rate']) || isset($json['mode_of_payments'])) {
                 $artistModel = new ArtistModel();
                 $artist = $artistModel->where('performer', $user_id)->first();
                 $artistData = [
                     'artist_name' => $json['artist_name'] ?? null,
                     'price_range' => $json['talent_fee'] ?? null,
                     'hours' => $json['base_rate'] ?? null,
-                    'payment_option' => $json['mod'] ?? null,
+                    'payment_option' => $json['mode_of_payments'] ?? null,
                     'performer' => $user_id
                 ];
                 
