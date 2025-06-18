@@ -177,34 +177,20 @@ class TalentController extends BaseController
         $session = session();
         $userId = $session->get('user_data')['user_id'] ?? null;
 
-        if ($this->request->getMethod() === 'POST') {
-            // Load models
-            $eventModel = new EventPerformance();
-            $bookingModel = new BookingModel();
-            $startDate = $this->request->getPost('start_date');
-            $endDate   = $this->request->getPost('end_date');
+    if ($this->request->getMethod() === 'POST') {
+        if (empty(session()->get('artist_data'))) {
+            $session->setFlashdata('error', 'Please update your artist information before proceeding with bookings.');
+            return redirect()->back();
+        }
+        $image = $this->request->getFile('event_image');
+        $image_path = save_image($image->getFileInfo());
+        // Load models
+        $eventModel = new EventPerformance();
+        $bookingModel = new BookingModel();
 
-            // Check for overlapping events by the same artist
-            $conflict = $bookingModel
-                ->select('event_performance.*')
-                ->join('event_performance', 'event_performance.id = booking.booking_event')
-                ->where('booking.artist', $userId)
-                ->groupStart()
-                    ->where('event_performance.event_startdate <=', $endDate)
-                    ->where('event_performance.event_enddate >=', $startDate)
-                ->groupEnd()
-                ->first();
-
-            if ($conflict) {
-                $session->setFlashdata('error', 'You already have a scheduled event that overlaps with this date.');
-                return redirect()->back()->withInput();
-            }
-            // Get database connection
-            $db = \Config\Database::connect();
-            $db->transStart(); // Start Transaction
-
-            $image = $this->request->getFile('event_image');
-            $image_path = save_image($image->getFileInfo());
+        // Get database connection
+        $db = \Config\Database::connect();
+        $db->transStart(); // Start Transaction
 
             // Prepare event data
             $eventData = [
