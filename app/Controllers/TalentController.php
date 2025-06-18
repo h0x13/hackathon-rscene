@@ -183,14 +183,23 @@ class TalentController extends BaseController
             // Load models
             $eventModel = new EventPerformance();
             $bookingModel = new BookingModel();
+            $artistModel = new ArtistModel();
+
+            // Get artist ID for the current user
+            $artist = $artistModel->where('performer', $userId)->first();
+            if (!$artist) {
+                $session->setFlashdata('error', 'Artist profile not found. Please update your profile first.');
+                return redirect()->back();
+            }
+
             $startDate = $this->request->getPost('start_date');
-            $endDate   = $this->request->getPost('end_date');
+            $endDate = $this->request->getPost('end_date');
 
             // Check for overlapping events by the same artist
             $conflict = $bookingModel
                 ->select('event_performance.*')
                 ->join('event_performance', 'event_performance.id = booking.booking_event')
-                ->where('booking.artist', $userId)
+                ->where('booking.artist', $artist['id'])
                 ->groupStart()
                     ->where('event_performance.event_startdate <=', $endDate)
                     ->where('event_performance.event_enddate >=', $startDate)
@@ -201,6 +210,7 @@ class TalentController extends BaseController
                 $session->setFlashdata('error', 'You already have a scheduled event that overlaps with this date.');
                 return redirect()->back()->withInput();
             }
+
             // Get database connection
             $db = \Config\Database::connect();
             $db->transStart(); // Start Transaction
@@ -208,18 +218,17 @@ class TalentController extends BaseController
             $image = $this->request->getFile('event_image');
             $image_path = save_image($image->getFileInfo());
 
-
             // Prepare event data
             $eventData = [
                 'venue_id'           => $this->request->getPost('venue_id'),
                 'organizer_id'       => $userId,
                 'event_name'         => $this->request->getPost('event_name'),
                 'event_description'  => $this->request->getPost('description'),
-                'event_startdate'    => $this->request->getPost('start_date'),
-                'event_enddate'      => $this->request->getPost('end_date'),
+                'event_startdate'    => $startDate,
+                'event_enddate'      => $endDate,
                 'event_status'       => 'Scheduled',
                 'booking_status'     => 'Pending',
-                'image_path'        => $image_path,
+                'image_path'         => $image_path,
             ];
 
             // Insert event
@@ -237,7 +246,8 @@ class TalentController extends BaseController
             // Prepare booking data
             $bookingData = [
                 'booking_event'   => $event_id,
-                'artist'          => $userId,
+                'artist'          => $artist['id'],
+                'date_created'    => date('Y-m-d H:i:s'),
                 'booking_status'  => 'Pending',
             ];
 
@@ -260,14 +270,14 @@ class TalentController extends BaseController
                 return redirect()->back();
             }
 
-            $session->setFlashdata('success', 'Event created successfully!');
+            $session->setFlashdata('success', 'Event created and booking submitted successfully!');
             return redirect()->to('/talents/events');
         }
 
         // Invalid method
         $session->setFlashdata('error', 'Failed to create event. Please try again.');
         return redirect()->back()->with('error', 'Invalid request.');
-        }
+    }
 
     public function allEvents()
     {

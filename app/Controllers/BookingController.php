@@ -40,8 +40,27 @@ class BookingController extends ResourceController
         $filter = $this->request->getGet('filter') ?? 'all';
         $userData = $this->session->get('user_data');
 
+        // Debug log
+        log_message('debug', 'User data: ' . json_encode($userData));
+
         if ($userData['user_type'] === 'venue_owner') {
+            // Debug log
+            log_message('debug', 'Fetching bookings for venue owner ID: ' . $userData['id']);
             $bookings = $this->bookingModel->getBookingsByVenueOwner($userData['id'], $filter);
+            // Debug log
+            log_message('debug', 'Found bookings: ' . json_encode($bookings));
+        } else if ($userData['user_type'] === 'artist') {
+            $artist = $this->artistModel->where('performer', $userData['id'])->first();
+            // Debug log
+            log_message('debug', 'Artist data: ' . json_encode($artist));
+            
+            if ($artist) {
+                $bookings = $this->bookingModel->getArtistBookings($artist['id'], $filter);
+                // Debug log
+                log_message('debug', 'Found artist bookings: ' . json_encode($bookings));
+            } else {
+                $bookings = [];
+            }
         } else {
             return $this->fail('Unauthorized access', 403);
         }
@@ -62,8 +81,11 @@ class BookingController extends ResourceController
         $json = $this->request->getJSON(true);
         $userData = $this->session->get('user_data');
 
+        // Debug log
+        log_message('debug', 'Creating booking with data: ' . json_encode($json));
+
         // Validate required fields
-        if (!isset($json['event_id']) || !isset($json['start_time']) || !isset($json['end_time'])) {
+        if (!isset($json['event_id'])) {
             return $this->fail('Missing required fields');
         }
 
@@ -73,27 +95,27 @@ class BookingController extends ResourceController
             return $this->fail('Artist profile not found');
         }
 
-        // Check if the time slot is available
-        if (!$this->bookingModel->isTimeSlotAvailable($json['event_id'], $json['start_time'], $json['end_time'])) {
-            return $this->fail('Selected time slot is not available');
+        // Check if event exists
+        $event = $this->eventModel->find($json['event_id']);
+        if (!$event) {
+            return $this->fail('Event not found');
         }
 
-        // Create booking
-        $bookingData = [
-            'booking_event' => $json['event_id'],
-            'artist' => $artist['id'],
-            'date_created' => date('Y-m-d H:i:s'),
-            'booking_status' => 'pending'
-        ];
+        // Check if booking already exists
+        $existingBooking = $this->bookingModel->checkBookingExists($json['event_id'], $artist['id']);
+        if ($existingBooking) {
+            return $this->fail('You have already booked this event');
+        }
 
         try {
-            $bookingId = $this->bookingModel->insert($bookingData);
+            $bookingId = $this->bookingModel->createBooking($json['event_id'], $artist['id']);
 
             return $this->respondCreated([
                 'message' => 'Booking created successfully',
                 'booking_id' => $bookingId
             ]);
         } catch (\Exception $e) {
+            log_message('error', 'Failed to create booking: ' . $e->getMessage());
             return $this->fail('Failed to create booking: ' . $e->getMessage());
         }
     }
@@ -108,6 +130,25 @@ class BookingController extends ResourceController
 
         if (!$booking) {
             return $this->fail('Booking not found');
+        }
+
+        // Check if user has permission to view this booking
+        $userData = $this->session->get('user_data');
+        if ($userData['user_type'] === 'venue_owner') {
+            $venue = $this->db->table('venue')
+                ->where('id', $booking['venue_id'])
+                ->where('owner_profile', $userData['id'])
+                ->get()
+                ->getRowArray();
+            
+            if (!$venue) {
+                return $this->fail('Unauthorized access to this booking', 403);
+            }
+        } else if ($userData['user_type'] === 'artist') {
+            $artist = $this->artistModel->where('performer', $userData['id'])->first();
+            if (!$artist || $artist['id'] !== $booking['artist']) {
+                return $this->fail('Unauthorized access to this booking', 403);
+            }
         }
 
         return $this->respond(['booking' => $booking]);
@@ -126,9 +167,25 @@ class BookingController extends ResourceController
         }
 
         $booking = $this->bookingModel->find($id);
-
         if (!$booking) {
             return $this->fail('Booking not found');
+        }
+
+        // Check if user has permission to update this booking
+        $userData = $this->session->get('user_data');
+        if ($userData['user_type'] === 'venue_owner') {
+            $venue = $this->db->table('venue v')
+                ->join('event_performance ep', 'ep.venue_id = v.id')
+                ->where('ep.id', $booking['booking_event'])
+                ->where('v.owner_profile', $userData['id'])
+                ->get()
+                ->getRowArray();
+            
+            if (!$venue) {
+                return $this->fail('Unauthorized access to update this booking', 403);
+            }
+        } else {
+            return $this->fail('Only venue owners can update booking status', 403);
         }
 
         // Don't allow status changes for cancelled bookings
@@ -141,6 +198,7 @@ class BookingController extends ResourceController
 
             return $this->respond(['message' => 'Booking status updated successfully']);
         } catch (\Exception $e) {
+            log_message('error', 'Failed to update booking status: ' . $e->getMessage());
             return $this->fail('Failed to update booking status: ' . $e->getMessage());
         }
     }
@@ -152,9 +210,28 @@ class BookingController extends ResourceController
         }
 
         $booking = $this->bookingModel->find($id);
-
         if (!$booking) {
             return $this->fail('Booking not found');
+        }
+
+        // Check if user has permission to cancel this booking
+        $userData = $this->session->get('user_data');
+        if ($userData['user_type'] === 'venue_owner') {
+            $venue = $this->db->table('venue v')
+                ->join('event_performance ep', 'ep.venue_id = v.id')
+                ->where('ep.id', $booking['booking_event'])
+                ->where('v.owner_profile', $userData['id'])
+                ->get()
+                ->getRowArray();
+            
+            if (!$venue) {
+                return $this->fail('Unauthorized access to cancel this booking', 403);
+            }
+        } else if ($userData['user_type'] === 'artist') {
+            $artist = $this->artistModel->where('performer', $userData['id'])->first();
+            if (!$artist || $artist['id'] !== $booking['artist']) {
+                return $this->fail('Unauthorized access to cancel this booking', 403);
+            }
         }
 
         // Don't allow cancelling already cancelled bookings
@@ -167,6 +244,7 @@ class BookingController extends ResourceController
 
             return $this->respond(['message' => 'Booking cancelled successfully']);
         } catch (\Exception $e) {
+            log_message('error', 'Failed to cancel booking: ' . $e->getMessage());
             return $this->fail('Failed to cancel booking: ' . $e->getMessage());
         }
     }

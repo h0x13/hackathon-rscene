@@ -59,21 +59,20 @@ class BookingModel extends Model
             ep.event_startdate,
             ep.event_enddate,
             ep.event_status,
-            ep.booking_status,
             ep.image_path,
             a.artist_name,
             a.price_range,
             a.payment_option,
             a.hours,
-            up.first_name,
-            up.last_name,
-            up.image_path as artist_image,
             v.venue_name,
             v.venue_description,
             v.street,
             v.barangay,
             v.city,
-            v.zip_code
+            v.zip_code,
+            up.first_name,
+            up.last_name,
+            up.image_path as artist_image
         ');
         $builder->join('event_performance ep', 'ep.id = b.booking_event');
         $builder->join('artist a', 'a.id = b.artist');
@@ -99,21 +98,20 @@ class BookingModel extends Model
             ep.event_startdate,
             ep.event_enddate,
             ep.event_status,
-            ep.booking_status,
             ep.image_path,
             a.artist_name,
             a.price_range,
             a.payment_option,
             a.hours,
-            up.first_name,
-            up.last_name,
-            up.image_path as artist_image,
             v.venue_name,
             v.venue_description,
             v.street,
             v.barangay,
             v.city,
-            v.zip_code
+            v.zip_code,
+            up.first_name,
+            up.last_name,
+            up.image_path as artist_image
         ');
         $builder->join('event_performance ep', 'ep.id = b.booking_event');
         $builder->join('artist a', 'a.id = b.artist');
@@ -128,16 +126,53 @@ class BookingModel extends Model
         return $this->update($bookingId, ['booking_status' => $status]);
     }
 
-    public function isTimeSlotAvailable($eventId, $startTime, $endTime)
+    public function getArtistBookings($artistId, $filter = 'all')
     {
         $builder = $this->db->table('booking b');
+        $builder->select('
+            b.*,
+            ep.event_name,
+            ep.event_description,
+            ep.event_startdate,
+            ep.event_enddate,
+            ep.event_status,
+            ep.image_path,
+            v.venue_name,
+            v.venue_description,
+            v.street,
+            v.barangay,
+            v.city,
+            v.zip_code
+        ');
         $builder->join('event_performance ep', 'ep.id = b.booking_event');
-        $builder->where('b.booking_event', $eventId);
-        $builder->where('b.booking_status !=', 'cancelled');
-        $builder->where('b.booking_status !=', 'rejected');
-        $builder->where('ep.event_startdate <=', $endTime);
-        $builder->where('ep.event_enddate >=', $startTime);
-        
-        return $builder->countAllResults() === 0;
+        $builder->join('venue v', 'v.id = ep.venue_id');
+        $builder->where('b.artist', $artistId);
+
+        if ($filter !== 'all') {
+            $builder->where('b.booking_status', $filter);
+        }
+
+        $builder->orderBy('b.date_created', 'DESC');
+        return $builder->get()->getResultArray();
+    }
+
+    public function createBooking($eventId, $artistId)
+    {
+        $data = [
+            'booking_event' => $eventId,
+            'artist' => $artistId,
+            'date_created' => date('Y-m-d H:i:s'),
+            'booking_status' => 'pending'
+        ];
+
+        return $this->insert($data);
+    }
+
+    public function checkBookingExists($eventId, $artistId)
+    {
+        return $this->where([
+            'booking_event' => $eventId,
+            'artist' => $artistId
+        ])->first();
     }
 }

@@ -460,40 +460,36 @@ VenueConnect - Home
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Book Event</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button
             </div>
             <div class="modal-body">
                 <form id="bookingForm">
                     <input type="hidden" id="eventId" name="event_id">
-                    <input type="hidden" id="startTime" name="start_time">
-                    <input type="hidden" id="endTime" name="end_time">
                     <div class="mb-3">
-                        <label class="form-label">Select Date</label>
-                        <input type="date" class="form-control" id="bookingDate" required min="<?= date('Y-m-d') ?>">
+                        <label class="form-label">Event Name</label>
+                        <input type="text" class="form-control" id="eventName" readonly>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Select Time Slot</label>
-                        <div class="booking-time-slots" id="timeSlots"></div>
+                        <label class="form-label">Start Date</label>
+                        <input type="datetime-local" class="form-control" id="startDate" name="start_date" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Notes (Optional)</label>
-                        <textarea class="form-control" id="bookingNotes" name="notes" rows="3"></textarea>
+                        <label class="form-label">End Date</label>
+                        <input type="datetime-local" class="form-control" id="endDate" name="end_date" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Payment Method</label>
-                        <select class="form-select" id="paymentMethod" name="payment_method" required>
-                            <option value="">Select payment method</option>
-                            <option value="cash">Cash</option>
-                            <option value="bank_transfer">Bank Transfer</option>
-                            <option value="credit_card">Credit Card</option>
-                            <option value="gcash">GCash</option>
-                        </select>
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Event Image</label>
+                        <input type="file" class="form-control" id="eventImage" name="event_image" accept="image/*" required>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" onclick="submitBooking()">Book Now</button>
+                <button type="button" class="btn btn-primary" onclick="submitBooking()">Submit Booking</button>
             </div>
         </div>
     </div>
@@ -533,98 +529,45 @@ VenueConnect - Home
         document.querySelector('[name="zip_code"]').value = venue.zip_code || '';
     }
 
-    function showBookingModal(eventId) {
+    function showBookingModal(eventId, eventName) {
         document.getElementById('eventId').value = eventId;
-        document.getElementById('bookingDate').value = '';
-        document.getElementById('startTime').value = '';
-        document.getElementById('endTime').value = '';
-        document.getElementById('bookingNotes').value = '';
-        document.getElementById('paymentMethod').value = '';
-        document.getElementById('timeSlots').innerHTML = '';
+        document.getElementById('eventName').value = eventName;
+        document.getElementById('startDate').value = '';
+        document.getElementById('endDate').value = '';
+        document.getElementById('description').value = '';
+        document.getElementById('eventImage').value = '';
 
         new bootstrap.Modal(document.getElementById('bookingModal')).show();
     }
 
-    function generateTimeSlots() {
-        const date = document.getElementById('bookingDate').value;
-        if (!date) return;
-
-        const timeSlots = document.getElementById('timeSlots');
-        timeSlots.innerHTML = '';
-
-        for (let hour = 9; hour <= 21; hour++) {
-            const startTime = `${hour.toString().padStart(2, '0')}:00`;
-            const endTime = `${(hour + 1).toString().padStart(2, '0')}:00`;
-
-            const slot = document.createElement('div');
-            slot.className = 'time-slot';
-            slot.textContent = `${startTime} - ${endTime}`;
-            slot.onclick = () => selectTimeSlot(slot, startTime, endTime);
-
-            timeSlots.appendChild(slot);
-        }
-
-        checkAvailability(date);
-    }
-
-    function selectTimeSlot(slot, startTime, endTime) {
-        document.querySelectorAll('.time-slot').forEach(s => {
-            s.classList.remove('selected');
-        });
-
-        slot.classList.add('selected');
-
-        document.getElementById('startTime').value = `${document.getElementById('bookingDate').value} ${startTime}`;
-        document.getElementById('endTime').value = `${document.getElementById('bookingDate').value} ${endTime}`;
-    }
-
-    function checkAvailability(date) {
-        const eventId = document.getElementById('eventId').value;
-
-        fetch(`<?= base_url('booking/check-availability') ?>/${eventId}?date=${date}`)
-            .then(response => response.json())
-            .then(data => {
-                const slots = document.querySelectorAll('.time-slot');
-                slots.forEach(slot => {
-                    const [startTime] = slot.textContent.split(' - ');
-                    if (data.unavailable_slots.includes(startTime)) {
-                        slot.classList.add('unavailable');
-                        slot.onclick = null;
-                    }
-                });
-            })
-            .catch(error => {
-                console.error('Error checking availability:', error);
-            });
-    }
-
     function submitBooking() {
-        const formData = {
-            event_id: document.getElementById('eventId').value,
-            start_time: document.getElementById('startTime').value,
-            end_time: document.getElementById('endTime').value,
-            notes: document.getElementById('bookingNotes').value,
-            payment_method: document.getElementById('paymentMethod').value
-        };
+        const form = document.getElementById('bookingForm');
+        const formData = new FormData(form);
 
-        if (!formData.start_time || !formData.end_time) {
-            alert('Please select a time slot');
+        // Validate dates
+        const startDate = new Date(formData.get('start_date'));
+        const endDate = new Date(formData.get('end_date'));
+
+        if (startDate >= endDate) {
+            alert('End date must be after start date');
             return;
         }
 
-        fetch('<?= base_url('booking/create') ?>', {
+        if (startDate < new Date()) {
+            alert('Start date cannot be in the past');
+            return;
+        }
+
+        fetch('<?= base_url('talents/saveEvent') ?>', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(formData)
+            body: formData
         })
         .then(response => response.json())
         .then(data => {
             if (data.error) {
                 throw new Error(data.error);
             }
-            alert('Booking created successfully!');
+            alert('Booking submitted successfully!');
             bootstrap.Modal.getInstance(document.getElementById('bookingModal')).hide();
             window.location.reload();
         })
@@ -649,7 +592,5 @@ VenueConnect - Home
             return;
         }
     });
-
-    document.getElementById('bookingDate').addEventListener('change', generateTimeSlots);
 </script>
 <?= $this->endSection() ?>
