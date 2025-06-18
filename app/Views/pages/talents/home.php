@@ -6,7 +6,6 @@ VenueConnect - Discover Events
 
 <?= $this->section('local_css') ?>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         body {
             font-family: 'Poppins', sans-serif;
@@ -18,11 +17,12 @@ VenueConnect - Discover Events
         .container {
             position: relative;
             z-index: 1;
+            animation: fadeInUp 0.8s ease-in-out;
         }
         .header-section {
             text-align: center;
             margin-bottom: 3rem;
-            animation: fadeInUp 0.8s ease-in-out;
+            
         }
         .header-section h1 {
             font-weight: 700;
@@ -49,7 +49,7 @@ VenueConnect - Discover Events
             max-width: 600px;
             margin: 0 auto 2.5rem;
             position: relative;
-            animation: fadeIn 0.8s ease-in-out;
+            
         }
         .search-bar input {
             border: 1px solid #e0e0e0;
@@ -112,44 +112,16 @@ VenueConnect - Discover Events
         .btn-outline-primary:hover::after {
             left: 100%;
         }
-        .btn-primary {
-            background: linear-gradient(to right, #6e8efb, #a777e3);
-            border: none;
-            font-weight: 600;
-            border-radius: 8px;
-            padding: 0.5rem 1rem;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-        .btn-primary:hover {
-            background: linear-gradient(to right, #5a75e8, #8e5ed0);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(110, 142, 251, 0.5);
-        }
-        .btn-primary::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-            transition: 0.5s;
-        }
-        .btn-primary:hover::after {
-            left: 100%;
-        }
+
         .map-container {
             border-radius: 15px;
             overflow: hidden;
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
             margin-bottom: 3rem;
-            animation: fadeInUp 0.8s ease-in-out;
+            
         }
         #map {
             height: 600px;
-            width: 100%;
             border-radius: 15px;
         }
         .section-title {
@@ -175,14 +147,14 @@ VenueConnect - Discover Events
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
             font-size: 1rem;
             color: #2c3e50;
-            animation: fadeIn 0.8s ease-in-out;
+            
         }
         .modal-content {
             border-radius: 15px;
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
             border: none;
             background: white;
-            animation: fadeInUp 0.5s ease-in-out;
+            
         }
         .modal-header {
             border-bottom: 1px solid #e0e0e0;
@@ -286,14 +258,14 @@ VenueConnect - Discover Events
             <?php endforeach; ?>
         <?php else: ?>
             <div class="col-12">
-                <div class="alert alert-info text-center">No events available at the moment.</div>
+                <div class="alert alert-info bg-info text-center">No events available at the moment.</div>
             </div>
         <?php endif; ?>
     </div> 
 
 
     <h4 class="section-title mb-4">Event Locations</h4>
-    <div class="map-container pe-5">
+    <div class="map-container container pe-5">
         <div id="map"></div>
     </div>
 </div>

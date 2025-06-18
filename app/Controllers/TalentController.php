@@ -30,6 +30,7 @@ class TalentController extends BaseController
         $this->artistModel = new ArtistModel();
         $this->session = \Config\Services::session();
         $this->email = \Config\Services::email();
+        helper('image');
     }
     public function home()
     {
@@ -106,6 +107,7 @@ class TalentController extends BaseController
                     event_performance.event_description,
                     event_performance.event_startdate,
                     event_performance.event_status,
+                    event_performance.image_path,
                     venue_pin.lat,
                     venue_pin.lon as lng,
                     venue.street,
@@ -173,82 +175,99 @@ class TalentController extends BaseController
     }
 
     public function saveEvent()
-{
-    $session = session();
-    $userId = $session->get('user_data')['user_id'] ?? null;
+    {
+        $session = session();
+        $userId = $session->get('user_data')['user_id'] ?? null;
 
-    if ($this->request->getMethod() === 'POST') {
-        if (empty(session()->get('artist_data'))) {
-            $session->setFlashdata('error', 'Please update your artist information before proceeding with bookings.');
-            return redirect()->back();
+        if ($this->request->getMethod() === 'POST') {
+            // Load models
+            $eventModel = new EventPerformance();
+            $bookingModel = new BookingModel();
+            $startDate = $this->request->getPost('start_date');
+            $endDate   = $this->request->getPost('end_date');
+
+            // Check for overlapping events by the same artist
+            $conflict = $bookingModel
+                ->select('event_performance.*')
+                ->join('event_performance', 'event_performance.id = booking.booking_event')
+                ->where('booking.artist', $userId)
+                ->groupStart()
+                    ->where('event_performance.event_startdate <=', $endDate)
+                    ->where('event_performance.event_enddate >=', $startDate)
+                ->groupEnd()
+                ->first();
+
+            if ($conflict) {
+                $session->setFlashdata('error', 'You already have a scheduled event that overlaps with this date.');
+                return redirect()->back()->withInput();
+            }
+            // Get database connection
+            $db = \Config\Database::connect();
+            $db->transStart(); // Start Transaction
+
+            $image = $this->request->getFile('event_image');
+            $image_path = save_image($image->getFileInfo());
+
+
+            // Prepare event data
+            $eventData = [
+                'venue_id'           => $this->request->getPost('venue_id'),
+                'organizer_id'       => $userId,
+                'event_name'         => $this->request->getPost('event_name'),
+                'event_description'  => $this->request->getPost('description'),
+                'event_startdate'    => $this->request->getPost('start_date'),
+                'event_enddate'      => $this->request->getPost('end_date'),
+                'event_status'       => 'Scheduled',
+                'booking_status'     => 'Pending',
+                'image_path'        => $image_path,
+            ];
+
+            // Insert event
+            $eventInsert = $eventModel->insert($eventData);
+            if (!$eventInsert) {
+                $db->transRollback(); // Rollback on failure
+                $errors = $eventModel->errors();
+                log_message('error', 'Event insertion failed: ' . var_export($errors, true));
+                $session->setFlashdata('error', 'Failed to insert event: ' . implode(', ', $errors));
+                return redirect()->back();
+            }
+
+            $event_id = $eventModel->getInsertID();
+
+            // Prepare booking data
+            $bookingData = [
+                'booking_event'   => $event_id,
+                'artist'          => $userId,
+                'booking_status'  => 'Pending',
+            ];
+
+            // Insert booking
+            $bookingInsert = $bookingModel->insert($bookingData);
+            if (!$bookingInsert) {
+                $db->transRollback(); // Rollback on failure
+                $errors = $bookingModel->errors();
+                log_message('error', 'Booking insertion failed: ' . var_export($errors, true));
+                $session->setFlashdata('error', 'Failed to insert booking: ' . implode(', ', $errors));
+                return redirect()->back();
+            }
+
+            // Commit transaction if everything is successful
+            $db->transComplete();
+
+            if ($db->transStatus() === false) {
+                // Something went wrong even after trying to complete
+                $session->setFlashdata('error', 'Transaction failed. Please try again.');
+                return redirect()->back();
+            }
+
+            $session->setFlashdata('success', 'Event created successfully!');
+            return redirect()->to('/talents/events');
         }
 
-        // Load models
-        $eventModel = new EventPerformance();
-        $bookingModel = new BookingModel();
-
-        // Get database connection
-        $db = \Config\Database::connect();
-        $db->transStart(); // Start Transaction
-
-        // Prepare event data
-        $eventData = [
-            'venue_id'           => $this->request->getPost('venue_id'),
-            'organizer_id'       => $userId,
-            'event_name'         => $this->request->getPost('event_name'),
-            'event_description'  => $this->request->getPost('description'),
-            'event_startdate'    => $this->request->getPost('start_date'),
-            'event_enddate'      => $this->request->getPost('end_date'),
-            'event_status'       => 'Scheduled',
-            'booking_status'     => 'Pending',
-        ];
-
-        // Insert event
-        $eventInsert = $eventModel->insert($eventData);
-        if (!$eventInsert) {
-            $db->transRollback(); // Rollback on failure
-            $errors = $eventModel->errors();
-            log_message('error', 'Event insertion failed: ' . var_export($errors, true));
-            $session->setFlashdata('error', 'Failed to insert event: ' . implode(', ', $errors));
-            return redirect()->back();
+        // Invalid method
+        $session->setFlashdata('error', 'Failed to create event. Please try again.');
+        return redirect()->back()->with('error', 'Invalid request.');
         }
-
-        $event_id = $eventModel->getInsertID();
-
-        // Prepare booking data
-        $bookingData = [
-            'booking_event'   => $event_id,
-            'artist'          => $userId,
-            'booking_status'  => 'Pending',
-        ];
-
-        // Insert booking
-        $bookingInsert = $bookingModel->insert($bookingData);
-        if (!$bookingInsert) {
-            $db->transRollback(); // Rollback on failure
-            $errors = $bookingModel->errors();
-            log_message('error', 'Booking insertion failed: ' . var_export($errors, true));
-            $session->setFlashdata('error', 'Failed to insert booking: ' . implode(', ', $errors));
-            return redirect()->back();
-        }
-
-        // Commit transaction if everything is successful
-        $db->transComplete();
-
-        if ($db->transStatus() === false) {
-            // Something went wrong even after trying to complete
-            $session->setFlashdata('error', 'Transaction failed. Please try again.');
-            return redirect()->back();
-        }
-
-        $session->setFlashdata('success', 'Event created successfully!');
-        return redirect()->to('/talents/events');
-    }
-
-    // Invalid method
-    $session->setFlashdata('error', 'Failed to create event. Please try again.');
-    return redirect()->back()->with('error', 'Invalid request.');
-    }
 
     public function allEvents()
     {
@@ -276,8 +295,7 @@ class TalentController extends BaseController
         return view('pages/talents/all_events', ['events' => $events]);
     }
 
-    public function talentsEvents()
-    {
+    public function talentsEvents(){
         $session = session();
         $userId = $session->get('user_data')['user_id'] ?? null;
         $Id = session()->get('user_data')['id'] ?? null;
@@ -308,136 +326,82 @@ class TalentController extends BaseController
         if (!$this->session->get('user_data')) {
             return redirect()->to('login');
         }
+        log_message('debug', 'Profile update POST data: ');
 
         if ($this->request->getMethod() === 'POST') {
+            $json = $this->request->getJSON(true);
             $user_id = $this->session->get('user_data')['user_id'];
             $user = $this->userCredentialModel->find($user_id);
             
-            if (!$user) {
-                return $this->respond([
-                    'success' => false,
-                    'message' => 'User not found'
-                ]);
-            }
+            // Debug: Log received JSON
+            log_message('debug', 'Profile update POST data: ' . json_encode($json));
 
-            // Get the raw input and decode it
-            $json = $this->request->getJSON(true);
-            
-            if (!$json) {
-                return $this->respond([
-                    'success' => false,
-                    'message' => 'Invalid request data'
-                ]);
-            }
 
-            // Start database transaction
-            $db = \Config\Database::connect();
-            $db->transStart();
+            $this->userProfileModel->update($user['user_profile_id'], [
+                'first_name' => $json['first_name'],
+                'middle_name' => $json['middle_name'] ?? null,
+                'last_name' => $json['last_name'],
+                'birthdate' => $json['birthdate']
+            ]);
 
-            try {
-                // Update user profile
-                $profileData = [
-                    'first_name' => $json['first_name'],
-                    'middle_name' => $json['middle_name'] ?? '',
-                    'last_name' => $json['last_name'],
-                    'birthdate' => $json['birthdate']
-                ];
+            log_message('debug', 'Updated user_profile_id: ' . $user['user_profile_id']);
 
-                $profileUpdated = $this->userProfileModel->update($user['user_profile_id'], $profileData);
-                
-                if (!$profileUpdated) {
-                    throw new \Exception('Failed to update profile information');
-                }
 
-                // Update artist info
+            // Update artist info (artist_name, talent_fee, base_rate, mode_of_payments)
+            // Adjust model/fields as per your schema
+            if (isset($json['artist_name']) || isset($json['talent_fee']) || isset($json['base_rate']) || isset($json['mode_of_payments'])) {
                 $artistModel = new ArtistModel();
                 $artist = $artistModel->where('performer', $user_id)->first();
-                
                 $artistData = [
-                    'artist_name' => $json['artist_name'],
-                    'price_range' => $json['talent_fee'],
-                    'hours' => $json['base_rate'],
-                    'payment_option' => $json['mode_of_payments'],
+                    'artist_name' => $json['artist_name'] ?? null,
+                    'price_range' => $json['talent_fee'] ?? null,
+                    'hours' => $json['base_rate'] ?? null,
+                    'payment_option' => $json['mode_of_payments'] ?? null,
                     'performer' => $user_id
                 ];
+                
+                log_message('debug', 'Artist data to save: ' . json_encode($artistData));
 
                 if ($artist) {
-                    $artistUpdated = $artistModel->update($artist['id'], $artistData);
+                    // Update existing artist record
+                    $artistModel->update($artist['id'], $artistData);
                 } else {
-                    $artistUpdated = $artistModel->insert($artistData);
+                    // Insert new artist record
+                    $artistModel->insert($artistData);
                 }
-
-                if (!$artistUpdated) {
-                    throw new \Exception('Failed to update artist information');
-                }
-
-                $db->transComplete();
-
-                if ($db->transStatus() === false) {
-                    throw new \Exception('Transaction failed');
-                }
-
-                $user_profile = $this->userProfileModel->find($user['id']);
-
-                $artistData = [];
-                if ($user['user_type'] === 'artist') {
-                    $artistData = $this->artistModel->where('performer', $user['id'])->first();
-                    log_message('debug', json_encode($artistData));
-                }
-                
-                $this->session->set('user_data', [
-                    'id' => $user['user_profile_id'],
-                    'user_id' => $user_profile['id'],
-                    'email' => $user['email'],
-                    'user_type' => $user['user_type'],
-                    'artist_data' => $artistData,
-                ]);
-
-                return $this->respond([
-                    'success' => true,
-                    'message' => 'Profile updated successfully!'
-                ]);
-
-            } catch (\Exception $e) {
-                $db->transRollback();
-                return $this->respond([
-                    'success' => false,
-                    'message' => $e->getMessage()
-                ]);
             }
+
+            return $this->respond([
+                'success' => true,
+                'message' => 'Profile updated successfully!'
+            ]);
         }
 
         $user_id = $this->session->get('user_data')['user_id'];
-        
-        // Get user credential with profile information
-        $user_credential = $this->userCredentialModel->find($user_id);
+        $user_credential = $this->userCredentialModel->with('user_profile')->find($user_id);
+
         if (!$user_credential) {
             return redirect()->to('login');
         }
 
-        // Get user profile information
-        $user_profile = $this->userProfileModel->find($user_credential['user_profile_id']);
-        if (!$user_profile) {
-            return redirect()->to('login');
-        }
-
-        // Get artist information
         $artistModel = new ArtistModel();
         $artist = $artistModel->where('performer', $user_id)->first();
 
+        // Format the data for the view
         $data = [
             'user_credential' => [
                 'id' => $user_credential['id'],
                 'email' => $user_credential['email'],
                 'user_type' => $user_credential['user_type'],
                 'user_profile' => [
-                    'first_name' => $user_profile['first_name'],
-                    'middle_name' => $user_profile['middle_name'],
-                    'last_name' => $user_profile['last_name'],
-                    'birthdate' => $user_profile['birthdate'],
-                    'image_path' => $user_profile['image_path']
+                    'first_name' => $user_credential['first_name'],
+                    'middle_name' => $user_credential['middle_name'],
+                    'last_name' => $user_credential['last_name'],
+                    'birthdate' => $user_credential['birthdate'],
+                    'image_path' => $user_credential['image_path']
                 ],
-                'artist' => $artist ? [
+                // Add artist info to the view data
+                'artist' => isset($artist) ? [
                     'artist_name' => $artist['artist_name'],
                     'talent_fee' => $artist['price_range'],
                     'base_rate' => $artist['hours'],

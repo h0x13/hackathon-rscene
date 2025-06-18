@@ -6,8 +6,6 @@ VenueConnect - Home
 
 <?= $this->section('local_css') ?>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.css">
     <style>
         body {
             font-family: 'Poppins', sans-serif;
@@ -16,24 +14,16 @@ VenueConnect - Home
             position: relative;
             overflow-x: hidden;
         }
-        body::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1), transparent 70%);
-            z-index: -1;
-        }
+
         .container {
             position: relative;
             z-index: 1;
+            animation: fadeInUp 0.8s ease-in-out;
         }
         .header-section {
             text-align: center;
             margin-bottom: 3rem;
-            animation: fadeInUp 0.8s ease-in-out;
+    
         }
         .header-section h1 {
             font-weight: 700;
@@ -79,7 +69,7 @@ VenueConnect - Home
             transition: all 0.4s ease;
             background: white;
             overflow: hidden;
-            animation: fadeInUp 0.8s ease-in-out;
+    
         }
         .event-card:hover {
             transform: translateY(-8px);
@@ -286,13 +276,19 @@ VenueConnect - Home
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
             font-size: 0.95rem;
             color: #2c3e50;
-            animation: fadeIn 0.5s ease-in-out;
         }
         .img-fluid.rounded {
             border-radius: 10px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
         }
-
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
     </style>
 <?= $this->endSection() ?>
 
@@ -315,7 +311,7 @@ VenueConnect - Home
             <?php foreach ($events as $event): ?>
                 <div class="col-md-4">
                     <div class="card event-card">
-                        <img src="https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=crop&w=400&q=80" class="event-img" alt="Event">
+                        <img src="<?= base_url('images/serve/' . $event['image_path']) ?>" class="event-img" alt="Event">
                         <div class="card-body">
                             <h5 class="card-title"><?= esc($event['event_name']) ?></h5>
                             <p class="card-text text-muted mb-1">
@@ -365,7 +361,7 @@ VenueConnect - Home
             <?php endforeach; ?>
         <?php else: ?>
             <div class="col-12">
-                <div class="alert alert-info text-center">No events available at the moment.</div>
+                <div class="alert alert-info bg-info text-center">No events available at the moment.</div>
             </div>
         <?php endif; ?>
     </div>
@@ -396,12 +392,21 @@ VenueConnect - Home
 <div class="modal fade" id="addEventModal" tabindex="-1" aria-labelledby="addEventModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <form id="eventForm" action="<?= site_url('talents/saveEvent') ?>" method="post">
+            <form id="eventForm" action="<?= site_url('talents/saveEvent') ?>" method="post"  enctype="multipart/form-data">
                 <div class="modal-header">
                     <h5 class="modal-title" id="addEventModalLabel">Add New Event</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body row g-3">
+                    
+                    <div class="col-12 mb-3 text-center">
+                        <label for="event_image" class="form-label d-block">Event Cover Image</label>
+                        <div class="d-inline-block position-relative">
+                            <i class="bi bi-cloud-arrow-up-fill" style="font-size: 3rem; color: #6c757d;"></i>
+                            <input type="file" class="form-control mt-2 p-2" name="event_image" id="event_image" accept="image/*">
+                        </div>
+                    </div>
+
                     <div class="col-md-6">
                         <label class="form-label">Event Name</label>
                         <input type="text" class="form-control" name="event_name" required placeholder="Enter the event title">
