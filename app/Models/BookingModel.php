@@ -48,4 +48,96 @@ class BookingModel extends Model
     protected $afterFind      = [];
     protected $beforeDelete   = [];
     protected $afterDelete    = [];
+
+    public function getBookingsByVenueOwner($venueOwnerId, $filter = 'all')
+    {
+        $builder = $this->db->table('booking b');
+        $builder->select('
+            b.*,
+            ep.event_name,
+            ep.event_description,
+            ep.event_startdate,
+            ep.event_enddate,
+            ep.event_status,
+            ep.booking_status,
+            ep.image_path,
+            a.artist_name,
+            a.price_range,
+            a.payment_option,
+            a.hours,
+            up.first_name,
+            up.last_name,
+            up.image_path as artist_image,
+            v.venue_name,
+            v.venue_description,
+            v.street,
+            v.barangay,
+            v.city,
+            v.zip_code
+        ');
+        $builder->join('event_performance ep', 'ep.id = b.booking_event');
+        $builder->join('artist a', 'a.id = b.artist');
+        $builder->join('user_profile up', 'up.id = a.performer');
+        $builder->join('venue v', 'v.id = ep.venue_id');
+        $builder->where('v.owner_profile', $venueOwnerId);
+
+        if ($filter !== 'all') {
+            $builder->where('b.booking_status', $filter);
+        }
+
+        $builder->orderBy('b.date_created', 'DESC');
+        return $builder->get()->getResultArray();
+    }
+
+    public function getBookingDetails($bookingId)
+    {
+        $builder = $this->db->table('booking b');
+        $builder->select('
+            b.*,
+            ep.event_name,
+            ep.event_description,
+            ep.event_startdate,
+            ep.event_enddate,
+            ep.event_status,
+            ep.booking_status,
+            ep.image_path,
+            a.artist_name,
+            a.price_range,
+            a.payment_option,
+            a.hours,
+            up.first_name,
+            up.last_name,
+            up.image_path as artist_image,
+            v.venue_name,
+            v.venue_description,
+            v.street,
+            v.barangay,
+            v.city,
+            v.zip_code
+        ');
+        $builder->join('event_performance ep', 'ep.id = b.booking_event');
+        $builder->join('artist a', 'a.id = b.artist');
+        $builder->join('user_profile up', 'up.id = a.performer');
+        $builder->join('venue v', 'v.id = ep.venue_id');
+        $builder->where('b.id', $bookingId);
+        return $builder->get()->getRowArray();
+    }
+
+    public function updateBookingStatus($bookingId, $status)
+    {
+        return $this->update($bookingId, ['booking_status' => $status]);
+    }
+
+    public function isTimeSlotAvailable($eventId, $startTime, $endTime)
+    {
+        $builder = $this->db->table('booking b');
+        $builder->join('event_performance ep', 'ep.id = b.booking_event');
+        $builder->where('b.booking_event', $eventId);
+        $builder->where('b.booking_status !=', 'cancelled');
+        $builder->where('b.booking_status !=', 'rejected');
+        $builder->where('ep.event_startdate <=', $endTime);
+        $builder->where('ep.event_enddate >=', $startTime);
+        
+        return $builder->countAllResults() === 0;
+    }
 }
