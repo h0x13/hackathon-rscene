@@ -16,7 +16,7 @@ VenueConnect - All Upcoming Events
         }
 
         .container {
-            position: relative;
+            /* position: relative; */
             z-index: 1;
             animation: fadeInUp 0.8s ease-in-out;
         }
@@ -134,6 +134,25 @@ VenueConnect - All Upcoming Events
         .btn-secondary:hover::after {
             left: 100%;
         }
+        .modal-content {
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            border: none;
+            background: white;
+        }
+        .modal-header {
+            background: linear-gradient(to right, #6e8efb, #a777e3);
+            color: white;
+            border-radius: 15px 15px 0 0;
+            border-bottom: none;
+        }
+        .modal-title {
+            font-weight: 600;
+            font-size: 1.25rem;
+        }
+        .modal-body {
+            padding: 1.5rem;
+        }
         .section-title {
             font-weight: 600;
             font-size: 1.8rem;
@@ -219,7 +238,7 @@ VenueConnect - All Upcoming Events
                 </div>
 
                 <!-- Event Details Modal -->
-                <div class="modal" id="eventModal<?= esc($event['id']) ?>" tabindex="-1">
+                <div class="modal fade" id="eventModal<?= esc($event['id']) ?>" tabindex="-1">
                     <div class="modal-dialog modal-lg">
                         <div class="modal-content">
                             <div class="modal-header">
