@@ -18,11 +18,12 @@ VenueConnect - All Upcoming Events
         .container {
             position: relative;
             z-index: 1;
+            animation: fadeInUp 0.8s ease-in-out;
         }
         .header-section {
             text-align: center;
             margin-bottom: 3rem;
-            animation: fadeInUp 0.8s ease-in-out;
+            
         }
         .header-section h1 {
             font-weight: 700;
@@ -84,12 +85,14 @@ VenueConnect - All Upcoming Events
             position: relative;
             overflow: hidden;
         }
+        
         .btn-outline-primary:hover {
             background: linear-gradient(to right, #6e8efb, #a777e3);
             color: white;
             border-color: transparent;
             box-shadow: 0 4px 12px rgba(110, 142, 251, 0.4);
         }
+
         .btn-outline-primary::after {
             content: '';
             position: absolute;
@@ -162,6 +165,14 @@ VenueConnect - All Upcoming Events
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
         }
 
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
     </style>
 <?= $this->endSection() ?>
 
@@ -172,14 +183,14 @@ VenueConnect - All Upcoming Events
         <p class="  ">Discover and explore concerts and events happening near you!</p>
     </div>
 
-    <div class="d-flex align-items-center justify-content-between mb-4 pe-5">
-        <h4 class="section-title"><i class="bi bi-calendar me-2"></i>All Upcoming Events</h4>
-        <a href="<?= site_url('/talents') ?>" role="button" class="btn btn-secondary">
-            <i class="bi bi-arrow-left me-1"></i>Back
-        </a>
-    </div>
+    <div class="row g-4 mb-5 pe-5">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <h4 class="section-title"><i class="bi bi-calendar me-2"></i>All Upcoming Events</h4>
+            <a href="<?= site_url('/talents') ?>" role="button" class="btn btn-secondary">
+                <i class="bi bi-arrow-left me-1"></i>Back
+            </a>
+        </div>
 
-    <div class="row g-4 mb-5">
         <?php if (!empty($events)): ?>
             <?php foreach ($events as $event): ?>
                 <div class="col-md-4">
@@ -234,7 +245,7 @@ VenueConnect - All Upcoming Events
             <?php endforeach; ?>
         <?php else: ?>
             <div class="col-12">
-                <div class="alert alert-info text-center">No events available at the moment.</div>
+                <div class="alert alert-info bg-info text-center">No events available at the moment.</div>
             </div>
         <?php endif; ?>
     </div>

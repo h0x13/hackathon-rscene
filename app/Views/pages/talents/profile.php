@@ -12,7 +12,7 @@
         box-shadow: 0 6px 25px rgba(0, 0, 0, 0.15);
         max-width: 800px;
         margin: 80px auto;
-        animation: fadeIn 0.5s ease-in-out;
+        animation: fadeInUp 0.8s ease-in-out;
     }
 
     @keyframes fadeIn {
@@ -25,6 +25,11 @@
             transform: translateY(0);
         }
     }
+
+    @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
     .profile-header {
         text-align: center;

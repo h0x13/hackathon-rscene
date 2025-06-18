@@ -6,6 +6,7 @@ VenueConnect - Home
 
 <?= $this->section('local_css') ?>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
     <style>
         body {
             font-family: 'Poppins', sans-serif;
@@ -13,24 +14,15 @@ VenueConnect - Home
             min-height: 100vh;
             overflow-x: hidden;
         }
-        body::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1), transparent 70%);
-            z-index: -1;
-        }
+
         .container {
             /* position: relative; */
             z-index: 1;
+            animation: fadeInUp 0.8s ease-in-out;
         }
         .header-section {
             text-align: center;
             margin-bottom: 3rem;
-            animation: fadeInUp 0.8s ease-in-out;
         }
         .header-section h1 {
             font-weight: 700;
@@ -188,7 +180,7 @@ VenueConnect - Home
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
             font-size: 0.95rem;
             color: #2c3e50;
-            animation: fadeIn 0.5s ease-in-out;
+
         }
         .img-fluid.rounded {
             border-radius: 10px;
@@ -212,10 +204,10 @@ VenueConnect - Home
         <p class="">Find and track concerts happening near you. Explore, attend, and enjoy the local music scene!</p>
     </div>
 
-    <div class="row g-4 mb-5">
-        <div class="d-flex align-items-center justify-content-between mb-4 pe-5">
+    <div class="row g-4 mb-5 pe-5">
+        <div class="d-flex align-items-center justify-content-between mb-4">
             <h4 class="section-title"><i class="bi bi-calendar me-2"></i>Your Upcoming Events</h4>
-            <a href="<?= site_url('/talents/events') ?>" role="button" class="btn btn-secondary me-5">
+            <a href="<?= site_url('/talents/events') ?>" role="button" class="btn btn-secondary">
                 <i class="bi bi-arrow-left me-1"></i>Back
             </a>
         </div>

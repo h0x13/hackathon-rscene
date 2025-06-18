@@ -21,6 +21,7 @@ class EventPerformance extends Model
         'event_enddate',
         'event_status',
         'booking_status',
+        'image_path'
     ];
 
     protected bool $allowEmptyInserts = false;
