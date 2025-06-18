@@ -92,18 +92,18 @@ class AccountController extends ResourceController
 
             $user_profile = $this->userProfileModel->find($user['user_profile_id']);
             
+            $artistData = [];
+            if ($user['user_type'] === 'artist') {
+                $artistData = $this->artistModel->where('performer', $user['id'])->first();
+            }
             
             $this->session->set('user_data', [
                 'id' => $user['user_profile_id'],
                 'user_id' => $user_profile['id'],
                 'email' => $email,
-                'user_type' => $user['user_type']
+                'user_type' => $user['user_type'],
+                'artist_data' => $artistData,
             ]);
-
-            $artistData = [];
-            if ($user['user_type'] === 'artist') {
-                $artistData = $this->artistModel->find($user['id']);
-            }
 
             return $this->respond([
                 'success' => true,
@@ -114,7 +114,6 @@ class AccountController extends ResourceController
                     'last_name' => $user_profile['last_name'],
                     'user_type' => $user['user_type']
                 ],
-                'artist_data' => $artistData,
             ]);
         }
 

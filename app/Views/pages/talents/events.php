@@ -636,7 +636,7 @@ VenueConnect - Home
 
     addEventModal.addEventListener('show.bs.modal', function (event) {
         const urlProfile = "<?= site_url('talents/profile')?>";
-        if (<?= empty(session()->get('artist_data'))? 1 : 0 ?>) {
+        if (<?= empty(session()->get('user_data')['artist_data'])? 1 : 0 ?>) {
             Swal.fire({
                 icon: 'error',
                 title: 'Profile Update Required',

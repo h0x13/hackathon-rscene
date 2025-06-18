@@ -37,7 +37,7 @@ $routes->post('profile/update', 'AccountController::updateProfile');
 $routes->get('talents', 'TalentController::home');
 $routes->get('talents/events', 'TalentController::events');
 $routes->get('talents/profile', 'TalentController::profile');
-$routes->post('talents/profile/update', 'TalentController::profile');
+$routes->post('talents/profile', 'TalentController::profile');
 $routes->get('talents/venue', 'TalentController::venues');
 $routes->post('talents/saveEvent', 'TalentController::saveEvent');
 $routes->get('talents/allEvents', 'TalentController::allEvents');

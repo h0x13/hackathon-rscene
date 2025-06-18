@@ -45,6 +45,7 @@
         <?php else: ?>
           <a href="<?= site_url('/dashboard') ?>"><i class="bi bi-house-door"></i> Dashboard</a>
           <a href="<?= site_url('/venue/list') ?>"><i class="bi bi-building"></i> Venues</a>
+          <a href="<?= site_url('/events/list') ?>"><i class="bi bi-calendar-check"></i> Events</a>
           <a href="<?= site_url('/booking/list') ?>"><i class="bi bi-calendar-check"></i> Bookings</a>
           <a href="<?= site_url('/profile') ?>"><i class="bi bi-gear"></i> Profile</a>
           <a href="<?= site_url('/logout') ?>"><i class="bi bi-box-arrow-right"></i> Logout</a>

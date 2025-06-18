@@ -64,6 +64,7 @@ CREATE TABLE event_performance (
     event_enddate date not null,
     event_status varchar(255) not null,
 	booking_status varchar(255) not null,
+    image_path varchar(255),
 		FOREIGN KEY (venue_id) REFERENCES venue(id) ON DELETE CASCADE,
         FOREIGN KEY (organizer_id) REFERENCES user_credential(id) ON DELETE CASCADE
 );

@@ -263,7 +263,7 @@
 </div>
 <?= $this->endSection() ?>
 
-<?= $this->section('local_js') ?>
+<?= $this->section('local_javascript') ?>
 <script>
     function showAlert(message, type) {
         const alertContainer = document.getElementById('alertContainer');
@@ -285,35 +285,63 @@
         event.preventDefault();
 
         const form = event.target;
-        // const formData = new FormData(form);
+        const formData = new FormData(form);
         
         const data = { 
-            first_name: form.get('first_name'),
-            middle_name: form.get('middle_name'),
-            last_name: form.get('last_name'),
-            birthdate: form.get('birthdate'),
-            artist_name: form.get('artist_name'),
-            talent_fee: form.get('talent_fee'),
-            base_rate: form.get('base_rate'),
-            mode_of_payments: form.get('mode_of_payments'),
+            first_name: formData.get('first_name'),
+            middle_name: formData.get('middle_name'),
+            last_name: formData.get('last_name'),
+            birthdate: formData.get('birthdate'),
+            artist_name: formData.get('artist_name'),
+            talent_fee: formData.get('talent_fee'),
+            base_rate: formData.get('base_rate'),
+            mode_of_payments: formData.get('mode_of_payments')
         };
 
         try {
-            const response = await axios.post('<?= site_url('talents/profile/update') ?>', data, {
+            const response = await fetch('<?= site_url('talents/profile') ?>', {
+                method: 'POST',
                 headers: {
                     'X-CSRF-TOKEN': document.querySelector('[name=<?= csrf_token() ?>]').value,
-                    'Content-Type': 'application/json'
-                }
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(data)
             });
 
-            if (response.data.success) {
-                showAlert(response.data.message, 'success');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+
+            if (result.success) {
+                // Show success message
+                showAlert(result.message, 'success');
+                
+                // Store success message in sessionStorage
+                sessionStorage.setItem('profileUpdateSuccess', result.message);
+                
+                // Reload the page after a short delay
+                setTimeout(() => {
+                    window.location.href = '<?= site_url('talents/profile') ?>';
+                }, 1500);
             } else {
-                showAlert(response.data.message || 'An error occurred', 'danger');
+                showAlert(result.message || 'An error occurred', 'danger');
             }
         } catch (error) {
-            showAlert(error.response?.data?.message || 'An error occurred', 'danger');
+            console.error('Error:', error);
+            showAlert('An error occurred while updating your profile', 'danger');
         }
     }
+
+    // Check for success message on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        const successMessage = sessionStorage.getItem('profileUpdateSuccess');
+        if (successMessage) {
+            showAlert(successMessage, 'success');
+            sessionStorage.removeItem('profileUpdateSuccess');
+        }
+    });
 </script>
 <?= $this->endSection() ?>
